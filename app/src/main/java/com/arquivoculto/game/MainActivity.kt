@@ -1,7 +1,7 @@
 package com.arquivoculto.game
 
-import android.os.Bundle
 import android.content.Context
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
@@ -10,26 +10,20 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -41,297 +35,263 @@ private val Muted = Color(0xFFA6B0BC)
 private val Line = Color(0xFF344355)
 
 private data class Evidence(val id: Int, val type: String, val title: String, val place: String, val description: String, val detail: String)
+private data class Person(val name: String, val role: String, val summary: String)
+private data class Question(val title: String, val answer: String, val clue: String)
 
 private val evidenceFiles = listOf(
-    Evidence(1, "DOCUMENTO", "Relatório da polícia", "Residência Blackwood", "O relatório inicial da noite do desaparecimento.", "Registro: 14 de outubro, 02h17. A porta da frente estava destrancada. Uma xícara de chá permanecia sobre a mesa, ainda morna quando a equipe chegou. Nenhuma janela foi encontrada quebrada. O relógio da sala parou às 23h46."),
-    Evidence(2, "FOTOGRAFIA", "A mesa de jantar", "Sala de jantar", "Uma fotografia feita pelos primeiros policiais no local.", "A fotografia mostra dois pratos, embora Elias morasse sozinho. Há marcas recentes de água em um dos copos e uma cadeira afastada da mesa. No verso, alguém escreveu: 'Ele estava esperando por alguém'."),
-    Evidence(3, "CARTA", "Bilhete sem assinatura", "Escritório", "Um papel dobrado encontrado sob o tapete da entrada.", "A mensagem diz: 'Não venha pela estrada principal. A luz da estação ainda está acesa.' A caligrafia não foi identificada. O papel tem cheiro de fumaça e uma pequena mancha de barro escuro."),
-    Evidence(4, "REGISTRO", "Ligação interrompida", "Central telefônica", "Última chamada registrada no telefone da casa.", "Às 23h39, uma chamada de 46 segundos foi feita para a antiga estação ferroviária. A ligação terminou abruptamente. O número de destino foi desativado há seis anos, pouco depois do fechamento da estação."),
-    Evidence(5, "FOTOGRAFIA", "Pegadas no jardim", "Fundos da residência", "Marcas parcialmente preservadas pela chuva.", "Duas sequências de pegadas seguem até o portão dos fundos. Uma delas é compatível com as botas de Elias. A segunda é menor e apresenta um desenho de sola incomum. As marcas não seguem em direção à estrada.")
+    Evidence(1,"DOCUMENTO","Relatório da polícia","Residência Blackwood","O relatório inicial da noite do desaparecimento.","Registro: 14 de outubro, 02h17. A porta da frente estava destrancada. Uma xícara de chá permanecia morna. Nenhuma janela foi quebrada. O relógio da sala parou às 23h46."),
+    Evidence(2,"FOTOGRAFIA","A mesa de jantar","Sala de jantar","Dois pratos foram encontrados na casa de Elias.","A fotografia mostra dois pratos, embora Elias morasse sozinho. Há marcas de água em um copo e uma cadeira afastada. No verso: 'Ele estava esperando por alguém'."),
+    Evidence(3,"CARTA","Bilhete sem assinatura","Escritório","Papel dobrado sob o tapete da entrada.","A mensagem diz: 'Não venha pela estrada principal. A luz da estação ainda está acesa.' A caligrafia não foi identificada. O papel tem cheiro de fumaça e barro escuro."),
+    Evidence(4,"REGISTRO","Ligação interrompida","Central telefônica","Última chamada registrada no telefone da casa.","Às 23h39, uma chamada de 46 segundos foi feita para a antiga estação. A ligação terminou abruptamente. O número foi desativado há seis anos."),
+    Evidence(5,"FOTOGRAFIA","Pegadas no jardim","Fundos da residência","Duas sequências de pegadas parcialmente preservadas.","Uma sequência é compatível com as botas de Elias. A segunda é menor e tem sola incomum. As marcas seguem até o portão dos fundos, não até a estrada.")
+)
+private val stationEvidence = listOf(
+    Evidence(101,"DOCUMENTO","Planta de manutenção","Arquivo da estação","Planta antiga com corredor técnico marcado à mão.","A planta indica um corredor sob a plataforma 2. Uma anotação recente circula a entrada do túnel e marca 00h12."),
+    Evidence(102,"FOTOGRAFIA","Luz na plataforma","Plataforma 2","Uma imagem noturna encontrada na guarita.","A luz da plataforma 2 está acesa. No reflexo da janela aparecem duas pessoas: uma alta e outra usando casaco claro."),
+    Evidence(103,"OBJETO","Chave enferrujada T-04","Guarita","Chave presa a uma etiqueta quase apagada.","A chave tem resíduos de terra úmida. A etiqueta T-04 corresponde à porta técnica indicada na planta."),
+    Evidence(104,"FOTOGRAFIA","Marcas no banco","Plataforma 2","Riscos recentes na madeira do banco.","As marcas formam as letras A.B. e parecem ter sido feitas pouco antes do abandono da estação."),
+    Evidence(105,"OBJETO","Lanterna sem pilhas","Entrada do túnel","Uma lanterna caída junto à porta técnica.","Há barro escuro no aro e uma fibra de tecido azul presa na alça. A lanterna foi usada recentemente.")
+)
+private val allEvidence = evidenceFiles + stationEvidence
+private val people = listOf(
+    Person("Marta Voss","Vizinha de Elias","Mora ao lado da residência e ouviu um veículo durante a noite."),
+    Person("Inspetor Raul Mendes","Polícia local","Fez o primeiro registro da ocorrência e conhece o horário oficial."),
+    Person("Arthur Bell","Ex-funcionário da estação","Conhece as passagens técnicas e trabalhou na estação até seu fechamento.")
+)
+private val questions = mapOf(
+    "Marta Voss" to listOf(
+        Question("O que ouviu naquela noite?","Ouvi um motor às 23h50. Não parecia um trem. Vi uma luz se mover na direção da estrada velha.","Marta confirma um veículo pouco depois da ligação das 23h39."),
+        Question("Você conhecia o bilhete?","Elias me perguntou se a estação ainda tinha energia. Eu disse que não deveria haver luz alguma lá.","Marta sabia que a estação estava oficialmente desativada."),
+        Question("Viu alguém com Elias?","Vi uma pessoa de casaco claro perto do portão dos fundos. Não consegui reconhecer o rosto.","A descrição combina com a segunda figura da fotografia da plataforma.")
+    ),
+    "Inspetor Raul Mendes" to listOf(
+        Question("Por que o relógio parou?","O mecanismo estava intacto. O ponteiro foi parado manualmente, mas isso não constou no relatório inicial.","O relatório omitiu que o relógio foi manipulado."),
+        Question("Quem tinha acesso à casa?","Arthur Bell esteve na residência dois dias antes. Disse que foi devolver um objeto de Elias.","Raul confirma uma visita não registrada no depoimento inicial."),
+        Question("Por que não investigou a estação?","Recebi uma ordem para tratar o caso como desaparecimento voluntário. A ordem veio de um telefone interno sem identificação.","A investigação foi desviada antes de examinar a estação.")
+    ),
+    "Arthur Bell" to listOf(
+        Question("O que sabe sobre o túnel T-04?","A chave T-04 abre a porta sob a plataforma 2. Só antigos funcionários sabiam disso.","Arthur conhece a chave e a passagem secreta."),
+        Question("Esteve na estação naquela noite?","Não. A estação estava fechada e eu estava em casa antes das onze.","Arthur nega presença na estação."),
+        Question("O que significam as letras A.B.?","Podem ser minhas iniciais, mas muita gente tem essas letras. Não lembro de ter escrito aquilo.","Arthur reconhece que as iniciais podem identificá-lo, mas evita explicar.")
+    )
+)
+private val validLinks = setOf(setOf(3,4),setOf(101,103),setOf(102,5),setOf(104,106),setOf(105,103))
+private val suspectContradictions = mapOf(
+    "Marta Voss" to listOf("Disse não saber se a estação tinha energia, mas admitiu que Elias perguntou sobre a luz do local.","Seu relato do casaco claro coincide com a figura refletida na fotografia."),
+    "Inspetor Raul Mendes" to listOf("O relatório não menciona que o relógio foi parado manualmente.","A ordem para não investigar a estação contradiz o procedimento normal."),
+    "Arthur Bell" to listOf("Negou ter ido à estação, mas conhece detalhes específicos da chave T-04.","As iniciais A.B. foram encontradas no banco da plataforma.")
 )
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = android.graphics.Color.rgb(8, 13, 20)
-        window.navigationBarColor = android.graphics.Color.rgb(8, 13, 20)
-        setContent { MaterialTheme { Surface(color = Night) { ArquivoOcultoApp() } } }
+        window.statusBarColor = android.graphics.Color.rgb(8,13,20)
+        window.navigationBarColor = android.graphics.Color.rgb(8,13,20)
+        setContent { MaterialTheme { Surface(color=Night) { ArquivoOcultoApp() } } }
     }
 }
 
-@Composable
-private fun ArquivoOcultoApp() {
+@Composable private fun ArquivoOcultoApp() {
     var showingCase by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF172333), Night, Color(0xFF05080D))))) {
-        AnimatedContent(targetState = showingCase, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tela") { open ->
-            if (open) CaseScreen(onBack = { showingCase = false }) else HomeScreen(onOpen = { showingCase = true })
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF172333),Night,Color(0xFF05080D))))) {
+        AnimatedContent(showingCase, transitionSpec={ fadeIn() togetherWith fadeOut() }, label="screen") {
+            if (it) CaseScreen { showingCase=false } else HomeScreen { showingCase=true }
         }
     }
 }
-
-@Composable
-private fun HomeScreen(onOpen: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 26.dp, vertical = 30.dp)) {
+@Composable private fun HomeScreen(onOpen:()->Unit) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(26.dp)) {
         BrandHeader()
-        Spacer(Modifier.height(70.dp))
-        Text("DOSSIÊ 001   •   ACESSO RESTRITO", color = Gold, fontSize = 11.sp, letterSpacing = 2.sp)
-        Spacer(Modifier.height(17.dp))
-        Text("Toda verdade\ndeixa rastros.", color = Pale, fontSize = 43.sp, lineHeight = 49.sp, fontWeight = FontWeight.Light)
+        Spacer(Modifier.height(60.dp))
+        Text("DOSSIÊ 001  •  ACESSO RESTRITO",color=Gold,fontSize=11.sp,letterSpacing=2.sp)
         Spacer(Modifier.height(16.dp))
-        Text("Investigue casos inexplicáveis. Reúna evidências. Descubra o que realmente aconteceu.", color = Muted, fontSize = 16.sp, lineHeight = 25.sp)
-        Spacer(Modifier.height(36.dp))
-        Column(Modifier.fillMaxWidth().border(1.dp, Gold.copy(alpha = .45f), RoundedCornerShape(18.dp)).background(Brush.linearGradient(listOf(Color(0xFF1B2A3B), Panel)), RoundedCornerShape(18.dp)).padding(22.dp)) {
-            Text("PRIMEIRO CASO  /  INVESTIGAÇÃO", color = Gold, fontSize = 10.sp, letterSpacing = 1.5.sp)
-            Spacer(Modifier.height(16.dp))
-            Text("O Desaparecimento\nde Blackwood", color = Pale, fontSize = 27.sp, lineHeight = 33.sp, fontWeight = FontWeight.SemiBold)
+        Text("Toda verdade\ndeixa rastros.",color=Pale,fontSize=43.sp,lineHeight=49.sp,fontWeight=FontWeight.Light)
+        Spacer(Modifier.height(16.dp))
+        Text("Investigue casos inexplicáveis. Reúna evidências. Descubra o que realmente aconteceu.",color=Muted,fontSize=16.sp,lineHeight=25.sp)
+        Spacer(Modifier.height(32.dp))
+        Column(Modifier.fillMaxWidth().border(1.dp,Gold.copy(alpha=.45f),RoundedCornerShape(18.dp)).background(Panel,RoundedCornerShape(18.dp)).padding(22.dp)) {
+            Text("PRIMEIRO CASO  /  INVESTIGAÇÃO",color=Gold,fontSize=10.sp)
+            Spacer(Modifier.height(14.dp))
+            Text("O Desaparecimento\nde Blackwood",color=Pale,fontSize=27.sp,lineHeight=33.sp,fontWeight=FontWeight.SemiBold)
             Spacer(Modifier.height(12.dp))
-            Text("Uma cidade pequena. Uma noite sem testemunhas. Uma pessoa que parece nunca ter existido.", color = Muted, fontSize = 14.sp, lineHeight = 22.sp)
-            Spacer(Modifier.height(24.dp))
-            GoldButton("INICIAR INVESTIGAÇÃO   →", onOpen)
+            Text("Uma cidade pequena. Uma noite sem testemunhas. Uma pessoa que parece nunca ter existido.",color=Muted,fontSize=14.sp,lineHeight=22.sp)
+            Spacer(Modifier.height(22.dp))
+            GoldButton("CONTINUAR INVESTIGAÇÃO  →",onOpen)
         }
-        Spacer(Modifier.height(28.dp))
-        Text("VERSÃO 0.2  •  PRIMEIRA ATUALIZAÇÃO JOGÁVEL", color = Color(0xFF657487), fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(24.dp))
+        Text("VERSÃO 0.7  •  INVESTIGAÇÃO AVANÇADA",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
     }
 }
-
-@Composable
-private fun BrandHeader() {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(42.dp).border(1.dp, Gold.copy(alpha = .7f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-            Text("AO", color = Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-        }
-        Column(Modifier.padding(start = 12.dp)) {
-            Text("ARQUIVO OCULTO", color = Pale, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            Text("DEPARTAMENTO DE INVESTIGAÇÃO", color = Muted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+@Composable private fun BrandHeader() {
+    Row(verticalAlignment=Alignment.CenterVertically) {
+        Box(Modifier.size(42.dp).border(1.dp,Gold,RoundedCornerShape(12.dp)),contentAlignment=Alignment.Center){ Text("AO",color=Gold,fontWeight=FontWeight.Bold) }
+        Column(Modifier.padding(start=12.dp)) {
+            Text("ARQUIVO OCULTO",color=Pale,fontSize=14.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp)
+            Text("DEPARTAMENTO DE INVESTIGAÇÃO",color=Muted,fontSize=9.sp,letterSpacing=1.sp)
         }
     }
 }
-
-@Composable
-private fun GoldButton(label: String, onClick: () -> Unit) {
-    Button(onClick = onClick, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Night)) {
-        Text(label, fontWeight = FontWeight.Bold, letterSpacing = .7.sp)
-    }
+@Composable private fun GoldButton(label:String,onClick:()->Unit) {
+    Button(onClick=onClick,modifier=Modifier.fillMaxWidth().height(52.dp),shape=RoundedCornerShape(10.dp),colors=ButtonDefaults.buttonColors(containerColor=Gold,contentColor=Night)){ Text(label,fontWeight=FontWeight.Bold,letterSpacing=.5.sp) }
 }
-
-@Composable
-private fun CaseScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    val prefs = remember(context) { context.getSharedPreferences("arquivo_oculto_save", Context.MODE_PRIVATE) }
+@Composable private fun CaseScreen(onBack:()->Unit) {
+    val context= LocalContext.current
+    val prefs= remember(context){context.getSharedPreferences("arquivo_oculto_save",Context.MODE_PRIVATE)}
     var section by remember { mutableStateOf("DOSSIÊ") }
+    var area by remember { mutableStateOf("PLATAFORMA") }
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
-    var selectedPerson by remember { mutableStateOf<String?>(null) }
-    var examined by remember { mutableStateOf(prefs.getStringSet("examined", emptySet())?.mapNotNull { it.toIntOrNull() }?.toSet() ?: emptySet()) }
-    var notes by remember { mutableStateOf(prefs.getString("notes", "") ?: "") }
-    var theory by remember { mutableStateOf(prefs.getString("theory", "") ?: "") }
-    var solved by remember { mutableStateOf(prefs.getBoolean("station_unlocked", false)) }
+    var examined by remember { mutableStateOf(prefs.getStringSet("examined",emptySet())?.mapNotNull{it.toIntOrNull()}?.toSet()?:emptySet()) }
+    var notes by remember { mutableStateOf(prefs.getString("notes","")?:"") }
+    var solved by remember { mutableStateOf(prefs.getBoolean("station_unlocked",false)) }
+    var selectedLinks by remember { mutableStateOf(emptySet<Int>()) }
+    var confirmedLinks by remember { mutableStateOf(prefs.getStringSet("links",emptySet())?.toSet()?:emptySet()) }
+    var interviewPerson by remember { mutableStateOf<String?>(null) }
+    var interviewAnswers by remember { mutableStateOf(prefs.getStringSet("answers",emptySet())?.toSet()?:emptySet()) }
+    var currentQuestion by remember { mutableStateOf<Question?>(null) }
+    var selectedSuspect by remember { mutableStateOf("Arthur Bell") }
+    var analysisDone by remember { mutableStateOf(prefs.getBoolean("analysis_done",false)) }
+    var theory by remember { mutableStateOf(prefs.getString("theory","")?:"") }
 
-    LaunchedEffect(examined, notes, theory, solved) {
-        prefs.edit()
-            .putStringSet("examined", examined.map { it.toString() }.toSet())
-            .putString("notes", notes)
-            .putString("theory", theory)
-            .putBoolean("station_unlocked", solved)
-            .apply()
+    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory) {
+        prefs.edit().putStringSet("examined",examined.map{it.toString()}.toSet())
+            .putString("notes",notes).putBoolean("station_unlocked",solved)
+            .putStringSet("links",confirmedLinks).putStringSet("answers",interviewAnswers)
+            .putBoolean("analysis_done",analysisDone).putString("theory",theory).apply()
     }
-
-    Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 20.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Column {
-                Text("ARQUIVO OCULTO  /  CASO 001", color = Gold, fontSize = 10.sp, letterSpacing = 1.3.sp)
-                Text("BLACKWOOD", color = Pale, fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-            }
-            TextButton(onClick = onBack) { Text("SAIR  ×", color = Muted) }
+    Column(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=16.dp)) {
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+            Column { Text("ARQUIVO OCULTO  /  CASO 001",color=Gold,fontSize=10.sp,letterSpacing=1.sp); Text("BLACKWOOD",color=Pale,fontSize=22.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp) }
+            TextButton(onClick=onBack){Text("SAIR ×",color=Muted)}
         }
-        Spacer(Modifier.height(14.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-            listOf("DOSSIÊ", "PISTAS", "PESSOAS", "CADERNO").forEach { tab ->
-                Button(onClick = { section = tab }, modifier = Modifier.weight(1f).height(42.dp), contentPadding = PaddingValues(horizontal = 2.dp, vertical = 0.dp), shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = if (section == tab) Gold else Panel, contentColor = if (section == tab) Night else Muted)) {
-                    Text(tab, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = .2.sp)
+        Spacer(Modifier.height(10.dp))
+        val tabs=listOf("DOSSIÊ","PISTAS","CONEXÕES","LOCAIS","PESSOAS","ANÁLISE","CADERNO")
+        Column(verticalArrangement=Arrangement.spacedBy(5.dp)) {
+            tabs.chunked(4).forEach { group ->
+                Row(horizontalArrangement=Arrangement.spacedBy(5.dp),modifier=Modifier.fillMaxWidth()) {
+                    group.forEach { tab ->
+                        Button(onClick={ if(tab!="LOCAIS"||solved) section=tab },modifier=Modifier.weight(1f).height(39.dp),contentPadding=PaddingValues(1.dp),shape=RoundedCornerShape(7.dp),colors=ButtonDefaults.buttonColors(containerColor=if(section==tab)Gold else Panel,contentColor=if(section==tab)Night else Muted,disabledContainerColor=Panel,disabledContentColor=Muted),enabled=tab!="LOCAIS"||solved){Text(tab,fontSize=8.sp,fontWeight=FontWeight.Bold)}
+                    }
+                    if(group.size<4) repeat(4-group.size){ Spacer(Modifier.weight(1f)) }
                 }
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
-            when (section) {
-                "DOSSIÊ" -> DossierContent(examined.size, examined, solved, onOpenEvidence = { selectedEvidence = it }, onGoClues = { section = "PISTAS" }, onGoStation = { section = "ESTAÇÃO" })
-                "PISTAS" -> EvidenceContent(examined, onExamine = { selectedEvidence = it })
-                "ESTAÇÃO" -> StationContent(examined, onExamine = { selectedEvidence = it })
-                "PESSOAS" -> PeopleContent(onInterview = { selectedPerson = it })
-                "CADERNO" -> NotebookContent(notes, { notes = it }, theory, { theory = it }, examined.size, solved, { solved = theory == "A segunda pessoa encontrou Elias na estação ferroviária." })
+            when(section) {
+                "DOSSIÊ" -> {
+                    SectionTitle("O DESAPARECIMENTO DE BLACKWOOD")
+                    Headline("A casa estava aberta. O jantar continuava servido. Elias Blackwood havia desaparecido.")
+                    Body("14 DE OUTUBRO  •  BLACKWOOD  •  02H17\n\nQuando a polícia chegou, não encontrou sinais de arrombamento. O telefone estava fora do gancho e o relógio da sala havia parado. Os vizinhos afirmaram não ter ouvido gritos.")
+                    InfoPanel("OBJETIVO","Descubra por que Elias saiu de casa, quem esteve com ele e para onde foi.")
+                    InfoPanel("PROGRESSO","Evidências examinadas: ${examined.size}/${allEvidence.size}  •  Conexões confirmadas: ${confirmedLinks.size}  •  Perguntas feitas: ${interviewAnswers.size}")
+                    if(solved) GoldButton("IR PARA A ESTAÇÃO FERROVIÁRIA →"){section="LOCAIS"}
+                }
+                "PISTAS" -> {
+                    SectionTitle("ARQUIVO DE EVIDÊNCIAS")
+                    Body("Abra documentos, fotografias e objetos. Toque novamente para rever os detalhes.")
+                    allEvidence.forEach { EvidenceCard(it,it.id in examined){selectedEvidence=it} }
+                }
+                "CONEXÕES" -> {
+                    SectionTitle("MURAL DE CONEXÕES")
+                    Body("Selecione duas pistas que acredita estarem relacionadas e toque em ANALISAR CONEXÃO. As ligações corretas ficam registradas no mural.")
+                    val selectable=allEvidence.filter { it.id in examined }
+                    selectable.forEach { item ->
+                        SelectableEvidence(item,item.id in selectedLinks){ selectedLinks=if(item.id in selectedLinks) selectedLinks-item.id else if(selectedLinks.size<2) selectedLinks+item.id else setOf(item.id) }
+                    }
+                    GoldButton("ANALISAR CONEXÃO"){ if(selectedLinks.size==2){ val key=selectedLinks.sorted().joinToString("-"); if(validLinks.any{it==selectedLinks}) confirmedLinks=confirmedLinks+key; selectedLinks=emptySet() } }
+                    Text("Conexões corretas: ${confirmedLinks.size}",color=Gold,fontSize=12.sp)
+                    if(confirmedLinks.isNotEmpty()) confirmedLinks.forEach { key -> val ids=key.split("-").mapNotNull{it.toIntOrNull()}; Text("✓ "+ids.mapNotNull{id->allEvidence.find{it.id==id}?.title}.joinToString("  ↔  "),color=Color(0xFF9BC7A5),fontSize=12.sp) }
+                    InfoPanel("DICA","A ligação das 23h39 aponta para a estação. A chave T-04 corresponde à planta do túnel. Compare também as pegadas com a figura fotografada.")
+                }
+                "LOCAIS" -> {
+                    SectionTitle("ESTAÇÃO FERROVIÁRIA")
+                    Headline("A estação deveria estar abandonada. Mesmo assim, alguém esteve aqui depois da meia-noite.")
+                    Body("O portão lateral está entreaberto. Há marcas recentes na poeira e uma lâmpada continua acesa.")
+                    Row(horizontalArrangement=Arrangement.spacedBy(6.dp),modifier=Modifier.fillMaxWidth()) {
+                        listOf("PLATAFORMA","GUARITA","TÚNEL").forEach { loc -> Button(onClick={area=loc},modifier=Modifier.weight(1f),contentPadding=PaddingValues(2.dp),colors=ButtonDefaults.buttonColors(containerColor=if(area==loc)Gold else Panel,contentColor=if(area==loc)Night else Pale)){Text(loc,fontSize=9.sp)} }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    val areaEvidence=when(area){"PLATAFORMA"->stationEvidence.filter{it.id==102||it.id==104};"GUARITA"->stationEvidence.filter{it.id==103};else->stationEvidence.filter{it.id==101||it.id==105}}
+                    InfoPanel("ÁREA: $area",when(area){"PLATAFORMA"->"A luz ainda funciona. Há marcas recentes no banco e sinais de que duas pessoas estiveram aqui.";"GUARITA"->"A guarita está revirada. Um molho de chaves parece ter sido escondido às pressas.";else->"A porta técnica está fechada. A planta e a chave podem revelar como entrar."})
+                    areaEvidence.forEach { EvidenceCard(it,it.id in examined){selectedEvidence=it} }
+                    if(area=="TÚNEL"&&103 in examined) GoldButton("USAR CHAVE T-04 NA PORTA"){ examined=examined+106; selectedEvidence=Evidence(106,"LOCAL DESBLOQUEADO","Passagem subterrânea","Túnel T-04","A porta foi aberta com a chave encontrada na guarita.","O túnel segue sob os trilhos e termina em uma sala de serviço. Há marcas de arrasto no chão e um pedaço de tecido azul preso a uma grade.") }
+                    if(106 in examined) InfoPanel("PASSAGEM ABERTA","Você encontrou a sala de serviço sob a estação. A investigação pode continuar.")
+                }
+                "PESSOAS" -> {
+                    SectionTitle("INTERROGATÓRIOS")
+                    Body("Escolha uma pessoa, selecione perguntas e compare as respostas com as evidências.")
+                    people.forEach { p -> PersonCard(p){interviewPerson=p.name} }
+                    InfoPanel("REGISTRO","Respostas registradas: ${interviewAnswers.size}/9")
+                }
+                "ANÁLISE" -> {
+                    SectionTitle("SUSPEITOS E CONTRADIÇÕES")
+                    Body("Compare álibis e depoimentos. A análise usa as respostas obtidas nos interrogatórios.")
+                    people.forEach { p ->
+                        Button(onClick={selectedSuspect=p.name},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(selectedSuspect==p.name)Gold else Panel,contentColor=if(selectedSuspect==p.name)Night else Pale)){Text("${p.name}  •  ${p.role}",modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
+                    }
+                    InfoPanel("ÁLIBI DECLARADO",when(selectedSuspect){"Marta Voss"->"Afirma estar em casa, mas relata ter visto um veículo e uma pessoa de casaco claro por volta da meia-noite.";"Inspetor Raul Mendes"->"Afirma ter seguido o procedimento, porém admite ter recebido uma ordem para não investigar a estação.";else->"Afirma estar em casa antes das 23h e nega ter visitado a estação na noite do desaparecimento."})
+                    Text("CONTRADIÇÕES IDENTIFICADAS",color=Gold,fontSize=11.sp,fontWeight=FontWeight.Bold)
+                    suspectContradictions[selectedSuspect]?.forEach { Body("• $it") }
+                    val relevant=interviewAnswers.count{it.startsWith(selectedSuspect+"|")}
+                    InfoPanel("CONFIABILIDADE DO DEPOIMENTO","Perguntas respondidas a esta pessoa: $relevant de 3. As contradições acima são pontos para investigar, não uma prova automática de culpa.")
+                    GoldButton("CONCLUIR ANÁLISE DOS DEPOIMENTOS"){analysisDone=interviewAnswers.size>=3}
+                    if(analysisDone) InfoPanel("ANÁLISE REGISTRADA","Você concluiu uma primeira comparação dos relatos. Use as conexões e evidências antes de formular uma acusação.")
+                }
+                "CADERNO" -> {
+                    SectionTitle("CADERNO DO INVESTIGADOR")
+                    Body("Anote horários, detalhes e contradições. Suas anotações são salvas automaticamente no aparelho.")
+                    OutlinedTextField(value=notes,onValueChange={notes=it},modifier=Modifier.fillMaxWidth().height(170.dp),placeholder={Text("Escreva suas observações...",color=Muted)},minLines=4)
+                    Spacer(Modifier.height(14.dp))
+                    InfoPanel("DEDUÇÃO INICIAL","Qual pista indica o próximo local importante?")
+                    listOf("A delegacia de Blackwood.","A segunda pessoa encontrou Elias na estação ferroviária.","O hospital da cidade.").forEach { option ->
+                        Button(onClick={theory=option},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(theory==option)Gold else Panel,contentColor=if(theory==option)Night else Pale)){Text(option,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
+                    }
+                    GoldButton("VERIFICAR DEDUÇÃO"){if(theory=="A segunda pessoa encontrou Elias na estação ferroviária."&&examined.size>=3){solved=true}}
+                    if(solved) InfoPanel("ESTAÇÃO DESBLOQUEADA","A dedução foi confirmada. A estação ferroviária está disponível na aba LOCAIS.")
+                }
             }
         }
     }
-
     selectedEvidence?.let { item ->
-        AlertDialog(onDismissRequest = { selectedEvidence = null }, containerColor = Panel,
-            title = { Text(item.title, color = Pale, fontWeight = FontWeight.Bold) },
-            text = { Column {
-                Text(item.type + "  •  " + item.place.uppercase(), color = Gold, fontSize = 10.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.height(12.dp))
-                Text(item.detail, color = Pale, lineHeight = 23.sp)
-            } },
-            confirmButton = { TextButton(onClick = { examined = examined + item.id; selectedEvidence = null }) { Text(if (item.id in examined) "FECHAR" else "REGISTRAR PISTA", color = Gold) } }
-        )
+        AlertDialog(onDismissRequest={selectedEvidence=null},containerColor=Panel,title={Text(item.title,color=Pale,fontWeight=FontWeight.Bold)},text={Column{Text(item.type+"  •  "+item.place.uppercase(),color=Gold,fontSize=10.sp);Spacer(Modifier.height(10.dp));Text(item.detail,color=Pale,lineHeight=23.sp)}},confirmButton={TextButton(onClick={examined=examined+item.id;selectedEvidence=null){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
     }
-
-    selectedPerson?.let { person ->
-        val statement = when (person) {
-            "Marta Voss" -> "Sou a vizinha da casa ao lado. Ouvi um motor por volta da meia-noite, mas não vi o carro. Elias parecia assustado nos últimos dias. Ele me perguntou se a estação ainda recebia trens."
-            "Inspetor Raul Mendes" -> "Fui o primeiro a entrar na residência. Não havia sinais de luta. O relógio parado às 23h46 me chamou a atenção, mas não posso afirmar se foi sabotado."
-            else -> "Trabalhei na estação até seu fechamento. Elias esteve lá algumas vezes no último mês. Na última visita, perguntou sobre o túnel de manutenção que passa sob os trilhos."
-        }
-        AlertDialog(onDismissRequest = { selectedPerson = null }, containerColor = Panel,
-            title = { Text("DEPOIMENTO  /  $person", color = Gold, fontSize = 16.sp) },
-            text = { Text(statement, color = Pale, lineHeight = 23.sp) },
-            confirmButton = { TextButton(onClick = { selectedPerson = null }) { Text("ENCERRAR", color = Gold) } }
-        )
+    interviewPerson?.let { name ->
+        val qs=questions[name]?:emptyList()
+        AlertDialog(onDismissRequest={interviewPerson=null;currentQuestion=null},containerColor=Panel,title={Text("INTERROGATÓRIO  /  $name",color=Gold,fontSize=16.sp)},text={
+            Column(Modifier.heightIn(max=430.dp).verticalScroll(rememberScrollState())) {
+                qs.forEachIndexed { index,q ->
+                    val key="$name|$index"
+                    Button(onClick={currentQuestion=q;interviewAnswers=interviewAnswers+key},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(key in interviewAnswers)Color(0xFF294238) else Color(0xFF1B2938),contentColor=Pale)){Text(q.title,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
+                    if(currentQuestion==q) {
+                        Text(q.answer,color=Pale,fontSize=13.sp,lineHeight=21.sp)
+                        Text("ANOTAÇÃO: ${q.clue}",color=Gold,fontSize=11.sp,lineHeight=17.sp)
+                    }
+                }
+            }
+        },confirmButton={TextButton(onClick={interviewPerson=null;currentQuestion=null}){Text("ENCERRAR",color=Gold)}})
     }
 }
-
-@Composable
-private fun DossierContent(examinedCount: Int, examined: Set<Int>, stationUnlocked: Boolean, onOpenEvidence: (Evidence) -> Unit, onGoClues: () -> Unit, onGoStation: () -> Unit) {
-    Spacer(Modifier.height(8.dp))
-    Text("O DESAPARECIMENTO DE BLACKWOOD", color = Gold, fontSize = 10.sp, letterSpacing = 1.4.sp)
-    Spacer(Modifier.height(10.dp))
-    Text("A casa estava aberta. O jantar continuava servido. Elias Blackwood havia desaparecido.", color = Pale, fontSize = 23.sp, lineHeight = 31.sp, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(14.dp))
-    Text("14 DE OUTUBRO  •  BLACKWOOD  •  02H17", color = Muted, fontSize = 10.sp, letterSpacing = 1.sp)
-    Spacer(Modifier.height(18.dp))
-    Text("Quando a polícia chegou, não encontrou sinais de arrombamento. O telefone estava fora do gancho e o relógio da sala havia parado. Os vizinhos afirmaram não ter ouvido gritos.", color = Pale, fontSize = 15.sp, lineHeight = 25.sp)
-    Spacer(Modifier.height(18.dp))
-    InfoPanel("OBJETIVO", "Descubra por que Elias saiu de casa, quem esteve com ele naquela noite e para onde foi.")
-    Spacer(Modifier.height(18.dp))
-    Text("PRIMEIRAS EVIDÊNCIAS", color = Gold, fontSize = 11.sp, letterSpacing = 1.3.sp)
-    Spacer(Modifier.height(8.dp))
-    evidenceFiles.take(2).forEach { item -> EvidenceCard(item, item.id in examined, onClick = { onOpenEvidence(item) }) }
-    Spacer(Modifier.height(10.dp))
-    Text("Evidências examinadas: $examinedCount / 5", color = Muted, fontSize = 12.sp)
-    GoldButton("ABRIR MURAL DE PISTAS", onGoClues)
-    if (stationUnlocked) {
-        Spacer(Modifier.height(14.dp))
-        InfoPanel("NOVO LOCAL DESBLOQUEADO", "A dedução foi confirmada. A antiga estação ferroviária agora pode ser investigada.")
-        Spacer(Modifier.height(10.dp))
-        GoldButton("INVESTIGAR A ESTAÇÃO  →", onGoStation)
+@Composable private fun SectionTitle(value:String){Spacer(Modifier.height(7.dp));Text(value,color=Gold,fontSize=11.sp,letterSpacing=1.4.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(10.dp))}
+@Composable private fun Headline(value:String){Text(value,color=Pale,fontSize=22.sp,lineHeight=30.sp,fontWeight=FontWeight.SemiBold);Spacer(Modifier.height(12.dp))}
+@Composable private fun Body(value:String){Text(value,color=Muted,fontSize=14.sp,lineHeight=23.sp);Spacer(Modifier.height(12.dp))}
+@Composable private fun InfoPanel(title:String,body:String){
+    Column(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Gold.copy(alpha=.35f),RoundedCornerShape(10.dp)).background(Color(0xFF182433),RoundedCornerShape(10.dp)).padding(13.dp)){
+        Text(title,color=Gold,fontSize=10.sp,letterSpacing=1.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(5.dp));Text(body,color=Pale,fontSize=13.sp,lineHeight=20.sp)
     }
 }
-
-private val stationEvidence = listOf(
-    Evidence(101, "DOCUMENTO", "Planta de manutenção", "Arquivo da estação", "Uma planta antiga com um corredor técnico marcado à mão.", "A planta indica um corredor de manutenção sob a plataforma 2. Uma anotação recente circula a entrada do túnel e marca o horário 00h12."),
-    Evidence(102, "FOTOGRAFIA", "Luz na plataforma", "Plataforma 2", "Uma imagem noturna encontrada na guarita.", "Ao fundo da fotografia, uma luz aparece acesa na plataforma 2. No reflexo da janela é possível distinguir duas pessoas: uma alta e outra aparentemente usando um casaco claro."),
-    Evidence(103, "OBJETO", "Chave enferrujada", "Guarita", "Uma chave presa a uma etiqueta quase apagada.", "A etiqueta ainda permite ler 'T-04'. A chave tem resíduos de terra úmida e parece abrir uma porta que ficou muito tempo sem uso.")
-)
-
-@Composable
-private fun StationContent(examined: Set<Int>, onExamine: (Evidence) -> Unit) {
-    Spacer(Modifier.height(8.dp))
-    Text("LOCAL 02  /  ESTAÇÃO FERROVIÁRIA", color = Gold, fontSize = 10.sp, letterSpacing = 1.4.sp)
-    Spacer(Modifier.height(10.dp))
-    Text("A estação deveria estar abandonada. Mesmo assim, alguém esteve aqui depois da meia-noite.", color = Pale, fontSize = 23.sp, lineHeight = 31.sp, fontWeight = FontWeight.SemiBold)
-    Spacer(Modifier.height(12.dp))
-    Text("O portão lateral está entreaberto. Há marcas recentes de passos na poeira e uma lâmpada continua acesa sobre a plataforma 2.", color = Muted, fontSize = 14.sp, lineHeight = 23.sp)
-    Spacer(Modifier.height(18.dp))
-    InfoPanel("OBJETIVO", "Descubra o que liga Elias ao túnel de manutenção e identifique quem apareceu na plataforma naquela noite.")
-    Spacer(Modifier.height(14.dp))
-    stationEvidence.forEach { item -> EvidenceCard(item, item.id in examined, onClick = { onExamine(item) }) }
-    Spacer(Modifier.height(8.dp))
-    InfoPanel("REGISTRO", stationEvidence.count { it.id in examined }.toString() + " de 3 evidências da estação examinadas.")
-}
-
-@Composable
-private fun EvidenceContent(examined: Set<Int>, onExamine: (Evidence) -> Unit) {
-    Spacer(Modifier.height(8.dp))
-    Text("MURAL DE EVIDÊNCIAS", color = Gold, fontSize = 11.sp, letterSpacing = 1.5.sp)
-    Spacer(Modifier.height(8.dp))
-    Text("Examine cada item com atenção. Detalhes aparentemente pequenos podem mudar o rumo do caso.", color = Muted, fontSize = 14.sp, lineHeight = 22.sp)
-    Spacer(Modifier.height(12.dp))
-    evidenceFiles.forEach { item -> EvidenceCard(item, item.id in examined, onClick = { onExamine(item) }) }
-    Spacer(Modifier.height(8.dp))
-    InfoPanel("PROGRESSO", examined.size.toString() + " de 5 evidências examinadas. Registre suas observações no caderno.")
-}
-
-@Composable
-private fun EvidenceCard(item: Evidence, examined: Boolean, onClick: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).border(1.dp, Line, RoundedCornerShape(12.dp)).background(Panel, RoundedCornerShape(12.dp)).padding(14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-            Text(item.type, color = Gold, fontSize = 9.sp, letterSpacing = 1.2.sp)
-            Text(if (examined) "EXAMINADA ✓" else "NÃO EXAMINADA", color = if (examined) Color(0xFF9BC7A5) else Muted, fontSize = 9.sp)
-        }
-        Spacer(Modifier.height(7.dp))
-        Text(item.title, color = Pale, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-        Text(item.place, color = Muted, fontSize = 11.sp)
-        Spacer(Modifier.height(7.dp))
-        Text(item.description, color = Pale.copy(alpha = .85f), fontSize = 13.sp, lineHeight = 19.sp)
-        Spacer(Modifier.height(8.dp))
-        TextButton(onClick = onClick, contentPadding = PaddingValues(0.dp)) { Text(if (examined) "REEXAMINAR EVIDÊNCIA  →" else "EXAMINAR EVIDÊNCIA  →", color = Gold, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+@Composable private fun EvidenceCard(item:Evidence,examined:Boolean,onClick:()->Unit){
+    Column(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).clickable{onClick()}.padding(13.dp)){
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text(item.type,color=Gold,fontSize=9.sp,letterSpacing=1.sp);Text(if(examined)"EXAMINADA ✓" else "NÃO EXAMINADA",color=if(examined)Color(0xFF9BC7A5) else Muted,fontSize=9.sp)}
+        Spacer(Modifier.height(6.dp));Text(item.title,color=Pale,fontSize=16.sp,fontWeight=FontWeight.SemiBold);Text(item.place,color=Muted,fontSize=11.sp);Spacer(Modifier.height(5.dp));Text(item.description,color=Pale.copy(alpha=.85f),fontSize=12.sp,lineHeight=18.sp);Text("EXAMINAR DETALHES  →",color=Gold,fontSize=10.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
     }
 }
-
-@Composable
-private fun PeopleContent(onInterview: (String) -> Unit) {
-    Spacer(Modifier.height(8.dp))
-    Text("PESSOAS RELACIONADAS", color = Gold, fontSize = 11.sp, letterSpacing = 1.4.sp)
-    Spacer(Modifier.height(8.dp))
-    Text("Converse com as pessoas envolvidas. Compare versões e procure contradições.", color = Muted, fontSize = 14.sp, lineHeight = 22.sp)
-    Spacer(Modifier.height(12.dp))
-    PersonCard("Marta Voss", "Vizinha de Elias", "Afirma ter ouvido um veículo durante a noite.", onInterview)
-    PersonCard("Inspetor Raul Mendes", "Polícia local", "Responsável pelo primeiro relatório da ocorrência.", onInterview)
-    PersonCard("Arthur Bell", "Ex-funcionário da estação", "Conhece a antiga estação e suas passagens de manutenção.", onInterview)
-}
-
-@Composable
-private fun PersonCard(name: String, role: String, summary: String, onInterview: (String) -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 5.dp).border(1.dp, Line, RoundedCornerShape(12.dp)).background(Panel, RoundedCornerShape(12.dp)).padding(14.dp)) {
-        Text("TESTEMUNHA / SUSPEITO", color = Gold, fontSize = 9.sp, letterSpacing = 1.sp)
-        Spacer(Modifier.height(5.dp))
-        Text(name, color = Pale, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-        Text(role, color = Muted, fontSize = 11.sp)
-        Spacer(Modifier.height(8.dp))
-        Text(summary, color = Pale.copy(alpha = .85f), fontSize = 13.sp, lineHeight = 19.sp)
-        TextButton(onClick = { onInterview(name) }, contentPadding = PaddingValues(0.dp)) { Text("INTERROGAR  →", color = Gold, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+@Composable private fun SelectableEvidence(item:Evidence,selected:Boolean,onClick:()->Unit){
+    Row(Modifier.fillMaxWidth().padding(vertical=3.dp).border(1.dp,if(selected)Gold else Line,RoundedCornerShape(9.dp)).background(if(selected)Color(0xFF293343) else Panel,RoundedCornerShape(9.dp)).clickable{onClick()}.padding(11.dp),verticalAlignment=Alignment.CenterVertically){
+        Text(if(selected)"☑" else "□",color=Gold,fontSize=18.sp);Column(Modifier.padding(start=10.dp)){Text(item.title,color=Pale,fontSize=13.sp,fontWeight=FontWeight.SemiBold);Text(item.type+" • "+item.place,color=Muted,fontSize=10.sp)}
     }
 }
-
-@Composable
-private fun NotebookContent(notes: String, onNotesChange: (String) -> Unit, theory: String, onTheoryChange: (String) -> Unit, examinedCount: Int, solved: Boolean, onSubmit: () -> Unit) {
-    Spacer(Modifier.height(8.dp))
-    Text("CADERNO DO INVESTIGADOR", color = Gold, fontSize = 11.sp, letterSpacing = 1.4.sp)
-    Spacer(Modifier.height(8.dp))
-    Text("Anote detalhes, horários e contradições. Suas anotações permanecem enquanto esta sessão estiver aberta.", color = Muted, fontSize = 13.sp, lineHeight = 21.sp)
-    Spacer(Modifier.height(14.dp))
-    Text("MINHAS ANOTAÇÕES", color = Pale, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-    Spacer(Modifier.height(6.dp))
-    OutlinedTextField(value = notes, onValueChange = onNotesChange, modifier = Modifier.fillMaxWidth().height(150.dp), placeholder = { Text("Escreva aqui suas observações...", color = Muted) }, minLines = 4)
-    Spacer(Modifier.height(20.dp))
-    InfoPanel("PRIMEIRA DEDUÇÃO", "Com base nos relatos, qual parece ser o próximo local importante para investigar?")
-    Spacer(Modifier.height(10.dp))
-    listOf("A delegacia de Blackwood.", "A segunda pessoa encontrou Elias na estação ferroviária.", "O hospital da cidade.").forEach { option ->
-        Button(onClick = { onTheoryChange(option) }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = if (theory == option) Gold else Panel, contentColor = if (theory == option) Night else Pale)) {
-            Text(option, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start, fontSize = 12.sp)
-        }
-    }
-    Spacer(Modifier.height(8.dp))
-    Button(onClick = onSubmit, enabled = examinedCount >= 3 && theory.isNotBlank(), modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = Gold, contentColor = Night, disabledContainerColor = Line, disabledContentColor = Muted)) {
-        Text("VERIFICAR DEDUÇÃO", fontWeight = FontWeight.Bold)
-    }
-    if (examinedCount < 3) {
-        Spacer(Modifier.height(8.dp))
-        Text("Examine pelo menos 3 evidências para liberar a verificação.", color = Muted, fontSize = 11.sp)
-    }
-    if (solved) {
-        Spacer(Modifier.height(12.dp))
-        InfoPanel("DEDUÇÃO CORRETA", "As pistas apontam para a antiga estação ferroviária. Uma nova etapa do caso foi desbloqueada: investigar o local.")
-    } else if (theory.isNotBlank() && examinedCount >= 3) {
-        Spacer(Modifier.height(8.dp))
-        Text("A dedução ainda não está confirmada. Releia os depoimentos e as evidências.", color = Gold, fontSize = 12.sp)
-    }
-}
-
-@Composable
-private fun InfoPanel(title: String, body: String) {
-    Column(Modifier.fillMaxWidth().border(1.dp, Gold.copy(alpha = .35f), RoundedCornerShape(10.dp)).background(Color(0xFF182433), RoundedCornerShape(10.dp)).padding(14.dp)) {
-        Text(title, color = Gold, fontSize = 10.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(6.dp))
-        Text(body, color = Pale, fontSize = 13.sp, lineHeight = 20.sp)
+@Composable private fun PersonCard(person:Person,onClick:()->Unit){
+    Column(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).padding(13.dp)){
+        Text("TESTEMUNHA / SUSPEITO",color=Gold,fontSize=9.sp);Spacer(Modifier.height(5.dp));Text(person.name,color=Pale,fontSize=17.sp,fontWeight=FontWeight.SemiBold);Text(person.role,color=Muted,fontSize=11.sp);Spacer(Modifier.height(6.dp));Text(person.summary,color=Pale,fontSize=12.sp,lineHeight=18.sp);TextButton(onClick=onClick,contentPadding=PaddingValues(0.dp)){Text("INICIAR INTERROGATÓRIO →",color=Gold,fontSize=10.sp,fontWeight=FontWeight.Bold)}
     }
 }

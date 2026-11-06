@@ -33,7 +33,7 @@ jobs:
           godot --headless --path . --quit-after 5
 
       - name: Instalar modelo de compilação Android do Godot
-        run: godot --headless --editor --path . --install-android-build-template
+        run: timeout 180s godot --headless --editor --path . --install-android-build-template --quit
 
       - name: Preparar diretório de saída
         run: mkdir -p build

@@ -24,6 +24,12 @@ jobs:
 
       - name: Configurar Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Instalar plataforma e ferramentas Android
+        run: |
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
 
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -38,7 +44,7 @@ jobs:
           set -euo pipefail
           APK="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
-          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)/aapt" dump badging "$APK" | head -n 5
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -n 5
           ls -lh "$APK"
 
       - name: Disponibilizar APK

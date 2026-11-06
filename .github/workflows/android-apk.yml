@@ -18,23 +18,41 @@ jobs:
       - name: Baixar projeto limpo
         uses: actions/checkout@v4
 
-      - name: Preparar configurações do Godot no runner
+      - name: Configurar SDK, Java e templates no Godot
+        shell: bash
         run: |
+          set -euxo pipefail
+          echo "ANDROID_HOME=${ANDROID_HOME:-}"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-}"
+          echo "JAVA_HOME=${JAVA_HOME:-}"
+          find / -path '*/platform-tools/adb' -o -path '*/build-tools/*/aapt' 2>/dev/null | head -30
+          find / -name android_debug.apk 2>/dev/null | head -10
           mkdir -p "$HOME/.config/godot" "$HOME/.local/share/godot"
-          cp -a /root/.config/godot/. "$HOME/.config/godot/"
-          cp -a /root/.local/share/godot/export_templates "$HOME/.local/share/godot/"
+          if [ -d /root/.local/share/godot/export_templates ]; then
+            cp -a /root/.local/share/godot/export_templates "$HOME/.local/share/godot/"
+          fi
+          SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/opt/android-sdk}}"
+          JAVA_PATH="${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}"
+          cat > "$HOME/.config/godot/editor_settings-4.4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$SDK_PATH"
+          export/android/java_sdk_path = "$JAVA_PATH"
+          EOF
           if [ ! -s /root/debug.keystore ]; then
             keytool -genkeypair -v -keystore /root/debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
-          test -s /root/debug.keystore
           mkdir -p build
 
-      - name: Conferir ferramentas e templates Android
+      - name: Verificar ambiente Android
+        shell: bash
         run: |
+          set -euxo pipefail
           godot --version
-          test -f "$HOME/.local/share/godot/export_templates/4.4.1.stable/android_debug.apk"
-          test -d "$ANDROID_HOME/platforms/android-33"
-          test -d "$ANDROID_HOME/build-tools/33.0.2"
+          test -d "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/opt/android-sdk}}/platforms"
+          test -s /root/debug.keystore
+          find "$HOME/.local/share/godot/export_templates" -name android_debug.apk -print -quit | grep .
 
       - name: Importar e validar projeto
         run: godot --headless --editor --path . --quit
@@ -44,6 +62,7 @@ jobs:
 
       - name: Validar arquivo APK
         run: |
+          set -e
           test -s build/ArquivoOculto.apk
           unzip -t build/ArquivoOculto.apk
           ls -lh build/ArquivoOculto.apk

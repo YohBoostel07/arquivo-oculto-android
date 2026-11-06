@@ -3,8 +3,6 @@ name: Gerar APK Android
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -12,26 +10,34 @@ permissions:
 
 jobs:
   build-apk:
+    name: Exportar APK instalável
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:4.4.1
     steps:
-      - name: Baixar código
+      - name: Baixar projeto limpo
         uses: actions/checkout@v4
 
-      - name: Preparar diretório de saída
-        run: mkdir -p build
+      - name: Conferir ambiente Android e Godot
+        run: |
+          godot --version
+          test -f "$HOME/.local/share/godot/export_templates/4.4.1.stable/android_debug.apk"
+          test -f /root/debug.keystore
+          mkdir -p build
 
-      - name: Importar recursos do projeto
+      - name: Importar e validar projeto
         run: godot --headless --editor --path . --quit
 
-      - name: Exportar APK de depuração
+      - name: Gerar APK Android arm64
         run: godot --headless --path . --export-debug "Android" build/ArquivoOculto.apk
 
-      - name: Confirmar geração do APK
-        run: test -s build/ArquivoOculto.apk
+      - name: Validar arquivo APK
+        run: |
+          test -s build/ArquivoOculto.apk
+          unzip -t build/ArquivoOculto.apk
+          ls -lh build/ArquivoOculto.apk
 
-      - name: Publicar APK
+      - name: Disponibilizar APK para download
         uses: actions/upload-artifact@v4
         with:
           name: Arquivo-Oculto-APK

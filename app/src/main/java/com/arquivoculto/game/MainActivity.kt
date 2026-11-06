@@ -8,9 +8,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,13 +20,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import androidx.compose.ui.unit.sp
 
 private val Night = Color(0xFF080D14)
@@ -37,6 +43,7 @@ private val Line = Color(0xFF344355)
 private data class Evidence(val id: Int, val type: String, val title: String, val place: String, val description: String, val detail: String)
 private data class Person(val name: String, val role: String, val summary: String)
 private data class Question(val title: String, val answer: String, val clue: String)
+private data class BoardNode(val id: Int, val title: String, val subtitle: String, val kind: String)
 
 private val evidenceFiles = listOf(
     Evidence(1,"DOCUMENTO","Relatório da polícia","Residência Blackwood","O relatório inicial da noite do desaparecimento.","Registro: 14 de outubro, 02h17. A porta da frente estava destrancada. Uma xícara de chá permanecia morna. Nenhuma janela foi quebrada. O relógio da sala parou às 23h46."),
@@ -75,7 +82,7 @@ private val questions = mapOf(
         Question("O que significam as letras A.B.?","Podem ser minhas iniciais, mas muita gente tem essas letras. Não lembro de ter escrito aquilo.","Arthur reconhece que as iniciais podem identificá-lo, mas evita explicar.")
     )
 )
-private val validLinks = setOf(setOf(3,4),setOf(101,103),setOf(102,5),setOf(104,106),setOf(105,103))
+private val validLinks = setOf(setOf(3,4),setOf(101,103),setOf(102,5),setOf(104,106),setOf(105,103),setOf(4,-2),setOf(102,-1),setOf(103,-3),setOf(104,-3))
 private val suspectContradictions = mapOf(
     "Marta Voss" to listOf("Disse não saber se a estação tinha energia, mas admitiu que Elias perguntou sobre a luz do local.","Seu relato do casaco claro coincide com a figura refletida na fotografia."),
     "Inspetor Raul Mendes" to listOf("O relatório não menciona que o relógio foi parado manualmente.","A ordem para não investigar a estação contradiz o procedimento normal."),
@@ -193,15 +200,28 @@ class MainActivity : ComponentActivity() {
                 }
                 "CONEXÕES" -> {
                     SectionTitle("MURAL DE CONEXÕES")
-                    Body("Selecione duas pistas que acredita estarem relacionadas e toque em ANALISAR CONEXÃO. As ligações corretas ficam registradas no mural.")
-                    val selectable=allEvidence.filter { it.id in examined }
-                    selectable.forEach { item ->
-                        SelectableEvidence(item,item.id in selectedLinks){ selectedLinks=if(item.id in selectedLinks) selectedLinks-item.id else if(selectedLinks.size<2) selectedLinks+item.id else setOf(item.id) }
+                    Body("Arraste as evidências e as pessoas pelo mural. Toque em dois cartões para selecioná-los e analise a relação.")
+                    InvestigationBoard(
+                        evidence=allEvidence.filter { it.id in examined },
+                        people=people,
+                        selected=selectedLinks,
+                        confirmed=confirmedLinks,
+                        onToggle={ id -> selectedLinks=if(id in selectedLinks) selectedLinks-id else if(selectedLinks.size<2) selectedLinks+id else setOf(id) }
+                    )
+                    GoldButton("ANALISAR RELAÇÃO SELECIONADA") {
+                        if(selectedLinks.size==2) {
+                            val key=selectedLinks.sorted().joinToString(",")
+                            if(validLinks.any { it==selectedLinks }) confirmedLinks=confirmedLinks+key
+                            selectedLinks=emptySet()
+                        }
                     }
-                    GoldButton("ANALISAR CONEXÃO"){ if(selectedLinks.size==2){ val key=selectedLinks.sorted().joinToString("-"); if(validLinks.any{it==selectedLinks}) confirmedLinks=confirmedLinks+key; selectedLinks=emptySet() } }
-                    Text("Conexões corretas: ${confirmedLinks.size}",color=Gold,fontSize=12.sp)
-                    if(confirmedLinks.isNotEmpty()) confirmedLinks.forEach { key -> val ids=key.split("-").mapNotNull{it.toIntOrNull()}; Text("✓ "+ids.mapNotNull{id->allEvidence.find{it.id==id}?.title}.joinToString("  ↔  "),color=Color(0xFF9BC7A5),fontSize=12.sp) }
-                    InfoPanel("DICA","A ligação das 23h39 aponta para a estação. A chave T-04 corresponde à planta do túnel. Compare também as pegadas com a figura fotografada.")
+                    Text("Relações confirmadas: ${confirmedLinks.size}",color=Gold,fontSize=12.sp)
+                    if(confirmedLinks.isNotEmpty()) confirmedLinks.forEach { key ->
+                        val ids=if(key.contains(",")) key.split(",").mapNotNull { it.toIntOrNull() } else key.split("-").mapNotNull { it.toIntOrNull() }
+                        val labels=ids.mapNotNull { id -> allEvidence.find { it.id==id }?.title ?: people.getOrNull(-id-1)?.name }
+                        Text("✓ "+labels.joinToString("  ↔  "),color=Color(0xFF9BC7A5),fontSize=12.sp)
+                    }
+                    InfoPanel("COMO INVESTIGAR","Organize as evidências no mural, aproxime depoimentos e documentos e procure relações sustentadas pelos detalhes do caso.")
                 }
                 "LOCAIS" -> {
                     SectionTitle("ESTAÇÃO FERROVIÁRIA")
@@ -271,6 +291,72 @@ class MainActivity : ComponentActivity() {
         },confirmButton={TextButton(onClick={interviewPerson=null;currentQuestion=null}){Text("ENCERRAR",color=Gold)}})
     }
 }
+
+@Composable private fun InvestigationBoard(
+    evidence: List<Evidence>,
+    people: List<Person>,
+    selected: Set<Int>,
+    confirmed: Set<String>,
+    onToggle: (Int) -> Unit
+) {
+    val nodes = remember(evidence, people) {
+        evidence.map { BoardNode(it.id,it.title,it.type+" • "+it.place,"EVIDÊNCIA") } +
+            people.mapIndexed { index,p -> BoardNode(-(index+1),p.name,p.role,"PESSOA") }
+    }
+    val positions = remember { androidx.compose.runtime.mutableStateMapOf<Int,Offset>() }
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    BoxWithConstraints(Modifier.fillMaxWidth().height(760.dp).border(1.dp,Gold.copy(alpha=.35f),RoundedCornerShape(12.dp)).background(Color(0xFF0B131E),RoundedCornerShape(12.dp))) {
+        val cardWidth=(maxWidth-28.dp)/2
+        Canvas(Modifier.fillMaxSize()) {
+            confirmed.forEach { key ->
+                val ids=if(key.contains(",")) key.split(",").mapNotNull { it.toIntOrNull() } else key.split("-").mapNotNull { it.toIntOrNull() }
+                if(ids.size==2) {
+                    val a=nodes.indexOfFirst { it.id==ids[0] }; val b=nodes.indexOfFirst { it.id==ids[1] }
+                    if(a>=0 && b>=0) {
+                        val pa=positions[ids[0]] ?: defaultBoardOffset(a,maxWidth.value)
+                        val pb=positions[ids[1]] ?: defaultBoardOffset(b,maxWidth.value)
+                        drawLine(Gold,Offset((pa.x+cardWidth.value/2)*density.density,(pa.y+42f)*density.density),Offset((pb.x+cardWidth.value/2)*density.density,(pb.y+42f)*density.density),strokeWidth=3.dp.toPx())
+                    }
+                }
+            }
+        }
+        nodes.forEachIndexed { index,node ->
+            val fallback=defaultBoardOffset(index,maxWidth.value)
+            val position=positions[node.id] ?: fallback
+            Column(
+                Modifier.offset { IntOffset((position.x*density.density).roundToInt(),(position.y*density.density).roundToInt()) }
+                    .width(cardWidth).heightIn(min=78.dp)
+                    .pointerInput(node.id) {
+                        detectDragGestures { change,dragAmount ->
+                            change.consume()
+                            val current=positions[node.id] ?: fallback
+                            val maxX=(maxWidth-cardWidth).value.coerceAtLeast(0f)
+                            val maxY=670f
+                            positions[node.id]=Offset((current.x+dragAmount.x/density.density).coerceIn(0f,maxX),(current.y+dragAmount.y/density.density).coerceIn(0f,maxY))
+                        }
+                    }
+                    .clickable { onToggle(node.id) }
+                    .border(1.dp,if(node.id in selected)Gold else if(node.id<0)Color(0xFF7187A0) else Line,RoundedCornerShape(9.dp))
+                    .background(if(node.id in selected)Color(0xFF3A3428) else Panel,RoundedCornerShape(9.dp))
+                    .padding(9.dp)
+            ) {
+                Text(node.kind,color=Gold,fontSize=8.sp,letterSpacing=.8.sp,fontWeight=FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                Text(node.title,color=Pale,fontSize=12.sp,lineHeight=15.sp,fontWeight=FontWeight.SemiBold,maxLines=2)
+                Text(node.subtitle,color=Muted,fontSize=9.sp,lineHeight=12.sp,maxLines=2)
+                Text(if(node.id in selected)"SELECIONADO" else "TOQUE / ARRASTE",color=if(node.id in selected)Gold else Muted,fontSize=7.sp)
+            }
+        }
+    }
+    Text("Evidências examinadas: ${evidence.size}  •  Pessoas: ${people.size}",color=Muted,fontSize=10.sp,modifier=Modifier.padding(top=7.dp))
+}
+
+private fun defaultBoardOffset(index:Int,width:Float):Offset {
+    val x=if(index%2==0)8f else width/2f+4f
+    val y=8f+(index/2)*118f
+    return Offset(x,y)
+}
+
 @Composable private fun SectionTitle(value:String){Spacer(Modifier.height(7.dp));Text(value,color=Gold,fontSize=11.sp,letterSpacing=1.4.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(10.dp))}
 @Composable private fun Headline(value:String){Text(value,color=Pale,fontSize=22.sp,lineHeight=30.sp,fontWeight=FontWeight.SemiBold);Spacer(Modifier.height(12.dp))}
 @Composable private fun Body(value:String){Text(value,color=Muted,fontSize=14.sp,lineHeight=23.sp);Spacer(Modifier.height(12.dp))}

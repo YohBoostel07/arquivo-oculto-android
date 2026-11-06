@@ -18,8 +18,8 @@ O pacote estruturado do caso está em `content/case_001.json`. Ele reúne o resu
 - [x] Conteúdo-base estruturado do Caso 001 (JSON)
 - [x] Telas iniciais de documentos e depoimentos integradas à interface
 - [ ] Arte final para fotografias, documentos e retratos
-- [ ] Persistência local do progresso
-- [ ] Salas privadas e multiplayer online
+- [x] Persistência local de evidências, conexões e anotações
+- [ ] Salas privadas e multiplayer online para 2 a 4 jogadores (modo cooperativo e individual)
 - [ ] Exportação e testes em Android
 
 ## Próximas etapas
@@ -29,4 +29,4 @@ O pacote estruturado do caso está em `content/case_001.json`. Ele reúne o resu
 4. Validar a compilação Godot e preparar a exportação Android.
 5. Projetar e implementar o backend multiplayer e a sincronização das salas.
 
-O multiplayer exige backend online; ele será implementado em etapa própria para permitir salas privadas e sincronização das pistas entre jogadores.
+O escopo confirmado é de 2 a 4 jogadores, com modo cooperativo em tempo real e modo de investigação individual com compartilhamento opcional. O multiplayer online ainda depende da implementação e hospedagem de um servidor; a interface local não será tratada como multiplayer funcional. Consulte `docs/PLANO_DE_DESENVOLVIMENTO.md` para as etapas e critérios de validação.

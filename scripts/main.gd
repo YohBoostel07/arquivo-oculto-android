@@ -93,7 +93,7 @@ func _build_home():
 	inner.add_child(_button("INICIAR INVESTIGAÇÃO", _build_case))
 	content.add_child(_label("VERSÃO DE DESENVOLVIMENTO  •  MODO LOCAL", 13, MUTED))
 
-func _build_case():
+func _build_case_shell():
 	_base()
 	var top = HBoxContainer.new()
 	content.add_child(top)
@@ -112,7 +112,10 @@ func _build_case():
 	tabs.add_child(_button("Anotações", _show_notes))
 	var divider = HSeparator.new()
 	content.add_child(divider)
-	_show_dossier()
+
+func _build_case():
+	_build_case_shell()
+	_render_dossier()
 
 func _section(title: String, description: String):
 	content.add_child(_label(title, 25, GOLD))

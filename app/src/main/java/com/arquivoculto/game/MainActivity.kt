@@ -1,6 +1,7 @@
 package com.arquivoculto.game
 
 import android.os.Bundle
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -114,13 +116,24 @@ private fun GoldButton(label: String, onClick: () -> Unit) {
 
 @Composable
 private fun CaseScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val prefs = remember(context) { context.getSharedPreferences("arquivo_oculto_save", Context.MODE_PRIVATE) }
     var section by remember { mutableStateOf("DOSSIÊ") }
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
     var selectedPerson by remember { mutableStateOf<String?>(null) }
-    var examined by remember { mutableStateOf(setOf<Int>()) }
-    var notes by remember { mutableStateOf("") }
-    var theory by remember { mutableStateOf("") }
-    var solved by remember { mutableStateOf(false) }
+    var examined by remember { mutableStateOf(prefs.getStringSet("examined", emptySet())?.mapNotNull { it.toIntOrNull() }?.toSet() ?: emptySet()) }
+    var notes by remember { mutableStateOf(prefs.getString("notes", "") ?: "") }
+    var theory by remember { mutableStateOf(prefs.getString("theory", "") ?: "") }
+    var solved by remember { mutableStateOf(prefs.getBoolean("station_unlocked", false)) }
+
+    LaunchedEffect(examined, notes, theory, solved) {
+        prefs.edit()
+            .putStringSet("examined", examined.map { it.toString() }.toSet())
+            .putString("notes", notes)
+            .putString("theory", theory)
+            .putBoolean("station_unlocked", solved)
+            .apply()
+    }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -141,8 +154,9 @@ private fun CaseScreen(onBack: () -> Unit) {
         Spacer(Modifier.height(12.dp))
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             when (section) {
-                "DOSSIÊ" -> DossierContent(examined.size, examined, onOpenEvidence = { selectedEvidence = it }, onGoClues = { section = "PISTAS" })
+                "DOSSIÊ" -> DossierContent(examined.size, examined, solved, onOpenEvidence = { selectedEvidence = it }, onGoClues = { section = "PISTAS" }, onGoStation = { section = "ESTAÇÃO" })
                 "PISTAS" -> EvidenceContent(examined, onExamine = { selectedEvidence = it })
+                "ESTAÇÃO" -> StationContent(examined, onExamine = { selectedEvidence = it })
                 "PESSOAS" -> PeopleContent(onInterview = { selectedPerson = it })
                 "CADERNO" -> NotebookContent(notes, { notes = it }, theory, { theory = it }, examined.size, solved, { solved = theory == "A segunda pessoa encontrou Elias na estação ferroviária." })
             }
@@ -176,7 +190,7 @@ private fun CaseScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun DossierContent(examinedCount: Int, examined: Set<Int>, onOpenEvidence: (Evidence) -> Unit, onGoClues: () -> Unit) {
+private fun DossierContent(examinedCount: Int, examined: Set<Int>, stationUnlocked: Boolean, onOpenEvidence: (Evidence) -> Unit, onGoClues: () -> Unit, onGoStation: () -> Unit) {
     Spacer(Modifier.height(8.dp))
     Text("O DESAPARECIMENTO DE BLACKWOOD", color = Gold, fontSize = 10.sp, letterSpacing = 1.4.sp)
     Spacer(Modifier.height(10.dp))
@@ -194,6 +208,34 @@ private fun DossierContent(examinedCount: Int, examined: Set<Int>, onOpenEvidenc
     Spacer(Modifier.height(10.dp))
     Text("Evidências examinadas: $examinedCount / 5", color = Muted, fontSize = 12.sp)
     GoldButton("ABRIR MURAL DE PISTAS", onGoClues)
+    if (stationUnlocked) {
+        Spacer(Modifier.height(14.dp))
+        InfoPanel("NOVO LOCAL DESBLOQUEADO", "A dedução foi confirmada. A antiga estação ferroviária agora pode ser investigada.")
+        Spacer(Modifier.height(10.dp))
+        GoldButton("INVESTIGAR A ESTAÇÃO  →", onGoStation)
+    }
+}
+
+private val stationEvidence = listOf(
+    Evidence(101, "DOCUMENTO", "Planta de manutenção", "Arquivo da estação", "Uma planta antiga com um corredor técnico marcado à mão.", "A planta indica um corredor de manutenção sob a plataforma 2. Uma anotação recente circula a entrada do túnel e marca o horário 00h12."),
+    Evidence(102, "FOTOGRAFIA", "Luz na plataforma", "Plataforma 2", "Uma imagem noturna encontrada na guarita.", "Ao fundo da fotografia, uma luz aparece acesa na plataforma 2. No reflexo da janela é possível distinguir duas pessoas: uma alta e outra aparentemente usando um casaco claro."),
+    Evidence(103, "OBJETO", "Chave enferrujada", "Guarita", "Uma chave presa a uma etiqueta quase apagada.", "A etiqueta ainda permite ler 'T-04'. A chave tem resíduos de terra úmida e parece abrir uma porta que ficou muito tempo sem uso.")
+)
+
+@Composable
+private fun StationContent(examined: Set<Int>, onExamine: (Evidence) -> Unit) {
+    Spacer(Modifier.height(8.dp))
+    Text("LOCAL 02  /  ESTAÇÃO FERROVIÁRIA", color = Gold, fontSize = 10.sp, letterSpacing = 1.4.sp)
+    Spacer(Modifier.height(10.dp))
+    Text("A estação deveria estar abandonada. Mesmo assim, alguém esteve aqui depois da meia-noite.", color = Pale, fontSize = 23.sp, lineHeight = 31.sp, fontWeight = FontWeight.SemiBold)
+    Spacer(Modifier.height(12.dp))
+    Text("O portão lateral está entreaberto. Há marcas recentes de passos na poeira e uma lâmpada continua acesa sobre a plataforma 2.", color = Muted, fontSize = 14.sp, lineHeight = 23.sp)
+    Spacer(Modifier.height(18.dp))
+    InfoPanel("OBJETIVO", "Descubra o que liga Elias ao túnel de manutenção e identifique quem apareceu na plataforma naquela noite.")
+    Spacer(Modifier.height(14.dp))
+    stationEvidence.forEach { item -> EvidenceCard(item, item.id in examined, onClick = { onExamine(item) }) }
+    Spacer(Modifier.height(8.dp))
+    InfoPanel("REGISTRO", stationEvidence.count { it.id in examined }.toString() + " de 3 evidências da estação examinadas.")
 }
 
 @Composable

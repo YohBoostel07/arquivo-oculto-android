@@ -20,6 +20,13 @@ jobs:
           cp -a /root/.config/godot/. "$HOME/.config/godot/"
           cp -a /root/.local/share/godot/export_templates "$HOME/.local/share/godot/"
 
+      - name: Garantir chave de depuração Android
+        run: |
+          if [ ! -s /root/debug.keystore ]; then
+            keytool -genkeypair -v -keystore /root/debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
+          fi
+          test -s /root/debug.keystore
+
       - name: Validar projeto Godot
         run: |
           godot --headless --editor --path . --quit

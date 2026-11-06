@@ -16,7 +16,7 @@
 - [x] Estrutura inicial do projeto Godot.
 - [x] Caso 001 — O Desaparecimento de Blackwood.
 - [x] Telas de dossiê, evidências, suspeitos, documentos, depoimentos, mural e anotações.
-- [x] Salvar evidências registradas, conexões e anotações no dispositivo.
+- [ ] Salvar evidências registradas, conexões e anotações no dispositivo (implementação enviada; aguardando validação de compilação).
 - [ ] Validar o projeto no Godot e gerar o primeiro APK verificável.
 
 ### Etapa 2 — Identidade visual e experiência

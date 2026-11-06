@@ -117,6 +117,38 @@ private val questions = mapOf(
         Question("O que significam as letras A.B.?","Podem ser minhas iniciais, mas muita gente tem essas letras. Não lembro de ter escrito aquilo.","Arthur reconhece que as iniciais podem identificá-lo, mas evita explicar.")
     )
 )
+
+private val caseTwoEvidence = listOf(
+    Evidence(201,"FOTOGRAFIA","Quarto 17","Hotel Aurora","O quarto onde Caio Nogueira foi encontrado.","A janela estava trancada por dentro. O relógio de bolso da vítima parou às 22h14. Não há sinais de luta junto à porta."),
+    Evidence(202,"OBJETO","Chave duplicada","Recepção","Uma cópia da chave do quarto 17 foi encontrada no depósito.","A cópia não consta no livro oficial. Há pó de latão recente no corte da chave."),
+    Evidence(203,"DOCUMENTO","Livro do elevador de serviço","Subsolo","Registro manual de uso do elevador durante a queda de energia.","Às 22h09, o elevador foi acionado no terceiro andar, embora o painel principal estivesse desligado."),
+    Evidence(204,"OBJETO","Cinzas úmidas","Varanda do quarto 17","Cinzas de papel encontradas no ralo da varanda.","Os fragmentos preservados contêm a palavra 'negativo' e parte de um carimbo médico."),
+    Evidence(205,"CARTA","Telegrama rasgado","Escritório do hotel","Um telegrama endereçado a Caio, rasgado em quatro partes.","O texto legível diz: 'Se publicar os exames, todos saberão quem alterou o laudo. Encontro no 17. 22h'."),
+    Evidence(206,"FOTOGRAFIA","Sapatos com pó de latão","Depósito","Um par de sapatos escondido atrás de caixas.","O pó de latão coincide com os resíduos da chave duplicada. O tamanho corresponde ao uniforme do funcionário noturno.")
+)
+private val caseTwoPeople = listOf(
+    Person("Tomás Vale","Funcionário noturno","Trabalhava no turno da noite e tinha acesso ao elevador de serviço."),
+    Person("Elisa Moura","Gerente do Hotel Aurora","Controlava os registros de hóspedes e as chaves dos quartos."),
+    Person("Dr. Vicente Lobo","Médico e hóspede","Foi citado no telegrama e visitou Caio naquela noite.")
+)
+private val caseTwoQuestions = mapOf(
+    "Tomás Vale" to listOf(
+        Question("Onde estava às 22h09?","No depósito, conferindo o gerador. O elevador de serviço estava desligado durante a queda de energia.","O livro registra uma viagem do elevador às 22h09."),
+        Question("Conhecia a chave duplicada?","Nunca fiz cópias. A gerente guardava as chaves extras no escritório.","O pó de latão nos seus sapatos liga Tomás à cópia."),
+        Question("Por que escondeu os sapatos?","Estavam sujos de óleo. Não queria ser advertido.","Os resíduos encontrados nos sapatos não são apenas óleo.")
+    ),
+    "Elisa Moura" to listOf(
+        Question("Quem tinha acesso às chaves?","Eu e o funcionário noturno. Todas as cópias eram registradas no livro da recepção.","A chave duplicada não aparece no registro."),
+        Question("O que sabe sobre o telegrama?","Caio recebeu muitas mensagens. Não li nenhuma delas.","O telegrama menciona um laudo alterado."),
+        Question("Por que o livro de hóspedes foi corrigido?","Um erro de horário. Corrigi pela manhã, como faço sempre.","A correção apagou a presença de um visitante às 22h.")
+    ),
+    "Dr. Vicente Lobo" to listOf(
+        Question("Qual era sua relação com Caio?","Ele investigava um erro antigo em um exame. Eu me recusei a conversar sem documentos.","O telegrama menciona exames e um laudo alterado."),
+        Question("Esteve no quarto 17?","Fui ao corredor, mas não entrei. Saí antes das dez.","O elevador foi acionado às 22h09."),
+        Question("O que significa 'negativo'?","É um resultado de exame. Alguém pode ter tentado esconder um resultado verdadeiro.","As cinzas vieram de um documento médico.")
+    )
+)
+
 private val validLinks = setOf(setOf(3,4),setOf(101,103),setOf(102,5),setOf(104,106),setOf(105,103),setOf(4,-2),setOf(102,-1),setOf(103,-3),setOf(104,-3))
 private val suspectContradictions = mapOf(
     "Marta Voss" to listOf("Disse não saber se a estação tinha energia, mas admitiu que Elias perguntou sobre a luz do local.","Seu relato do casaco claro coincide com a figura refletida na fotografia."),
@@ -202,29 +234,42 @@ class MainActivity : ComponentActivity() {
     var hintStep by remember { mutableIntStateOf(prefs.getInt("hint_step",0)) }
     var accusation by remember { mutableStateOf(prefs.getString("accusation","")?:"") }
     var ending by remember { mutableStateOf(prefs.getString("ending","")?:"") }
+    var activeCase by remember { mutableStateOf(prefs.getString("active_case","001")?:"") }
+    var examinedTwo by remember { mutableStateOf(prefs.getStringSet("case2_examined",emptySet())?.mapNotNull{it.toIntOrNull()}?.toSet()?:emptySet()) }
+    var answersTwo by remember { mutableStateOf(prefs.getStringSet("case2_answers",emptySet())?.toSet()?:emptySet()) }
+    var accusationTwo by remember { mutableStateOf(prefs.getString("case2_accusation","")?:"") }
+    var endingTwo by remember { mutableStateOf(prefs.getString("case2_ending","")?:"") }
+    var historyLog by remember { mutableStateOf(prefs.getString("history_log","")?:"") }
+    fun registerEvent(event:String) {
+        val stamp=android.text.format.DateFormat.format("dd/MM HH:mm",System.currentTimeMillis()).toString()
+        historyLog=(historyLog+"\n"+stamp+" • "+event).trim().lines().takeLast(60).joinToString("\n")
+    }
 
-    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending,soundEnabled,hintsEnabled,difficulty,hintStep) {
+    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending,soundEnabled,hintsEnabled,difficulty,hintStep,activeCase,examinedTwo,answersTwo,accusationTwo,endingTwo,historyLog) {
         prefs.edit().putStringSet("examined",examined.map{it.toString()}.toSet())
             .putString("notes",notes).putBoolean("station_unlocked",solved)
             .putStringSet("links",confirmedLinks).putStringSet("answers",interviewAnswers)
             .putBoolean("analysis_done",analysisDone).putString("theory",theory)
             .putString("accusation",accusation).putString("ending",ending)
             .putBoolean("sound_enabled",soundEnabled).putBoolean("hints_enabled",hintsEnabled)
-            .putString("difficulty",difficulty).putInt("hint_step",hintStep).apply()
+            .putString("difficulty",difficulty).putInt("hint_step",hintStep)
+            .putString("active_case",activeCase).putStringSet("case2_examined",examinedTwo.map{it.toString()}.toSet())
+            .putStringSet("case2_answers",answersTwo).putString("case2_accusation",accusationTwo)
+            .putString("case2_ending",endingTwo).putString("history_log",historyLog).apply()
     }
     Column(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=16.dp)) {
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-            Column { Text("ARQUIVO OCULTO  /  CASO 001",color=Gold,fontSize=10.sp,letterSpacing=1.sp); Text("BLACKWOOD",color=Pale,fontSize=22.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp) }
+            Column { Text("ARQUIVO OCULTO  /  CASO $activeCase",color=Gold,fontSize=10.sp,letterSpacing=1.sp); Text(if(activeCase=="001") "BLACKWOOD" else "O QUARTO 17",color=Pale,fontSize=22.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp) }
             TextButton(onClick={soundEnabled=!soundEnabled;CaseAudio.play(!soundEnabled,ToneGenerator.TONE_PROP_BEEP)}) { Text(if(soundEnabled) "SOM: ON" else "SOM: OFF",color=if(soundEnabled) Gold else Muted,fontSize=10.sp) }
             TextButton(onClick=onBack){Text("SAIR ×",color=Muted)}
         }
         Spacer(Modifier.height(10.dp))
-        val tabs=listOf("DOSSIÊ","PISTAS","CONEXÕES","LOCAIS","PESSOAS","ANÁLISE","ACUSAÇÃO","CADERNO")
+        val tabs=if(activeCase=="001") listOf("DOSSIÊ","PISTAS","CONEXÕES","LOCAIS","PESSOAS","ANÁLISE","ACUSAÇÃO","CADERNO","ARQUIVO","HISTÓRICO") else listOf("DOSSIÊ","PISTAS","PESSOAS","ACUSAÇÃO","ARQUIVO","HISTÓRICO")
         Column(verticalArrangement=Arrangement.spacedBy(5.dp)) {
             tabs.chunked(4).forEach { group ->
                 Row(horizontalArrangement=Arrangement.spacedBy(5.dp),modifier=Modifier.fillMaxWidth()) {
                     group.forEach { tab ->
-                        Button(onClick={ if(tab!="LOCAIS"||solved) section=tab },modifier=Modifier.weight(1f).height(39.dp),contentPadding=PaddingValues(1.dp),shape=RoundedCornerShape(7.dp),colors=ButtonDefaults.buttonColors(containerColor=if(section==tab)Gold else Panel,contentColor=if(section==tab)Night else Muted,disabledContainerColor=Panel,disabledContentColor=Muted),enabled=tab!="LOCAIS"||solved){Text(tab,fontSize=8.sp,fontWeight=FontWeight.Bold)}
+                        Button(onClick={ if(tab=="ARQUIVO"||tab=="HISTÓRICO"||activeCase=="002"||tab!="LOCAIS"||solved) section=tab },modifier=Modifier.weight(1f).height(39.dp),contentPadding=PaddingValues(1.dp),shape=RoundedCornerShape(7.dp),colors=ButtonDefaults.buttonColors(containerColor=if(section==tab)Gold else Panel,contentColor=if(section==tab)Night else Muted,disabledContainerColor=Panel,disabledContentColor=Muted),enabled=tab!="LOCAIS"||(activeCase=="001"&&solved)){Text(tab,fontSize=8.sp,fontWeight=FontWeight.Bold)}
                     }
                     if(group.size<4) repeat(4-group.size){ Spacer(Modifier.weight(1f)) }
                 }
@@ -233,18 +278,64 @@ class MainActivity : ComponentActivity() {
         Spacer(Modifier.height(10.dp))
         Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             when(section) {
+                "ARQUIVO" -> {
+                    SectionTitle("ARQUIVO DE CASOS")
+                    Body("Selecione uma investigação ou consulte os documentos preservados pelo departamento.")
+                    InfoPanel("CASO 001  •  BLACKWOOD",if(ending.contains("CASO 001 CONCLUÍDO")) "CONCLUÍDO — ${examined.size} evidências examinadas." else "EM ANDAMENTO — ${examined.size} evidências examinadas.")
+                    GoldButton("ABRIR CASO 001") { activeCase="001";section="DOSSIÊ";registerEvent("Acesso ao Caso 001 — Blackwood") }
+                    Spacer(Modifier.height(12.dp))
+                    InfoPanel("CASO 002  •  O QUARTO 17",if(endingTwo.contains("CASO 002 CONCLUÍDO")) "CONCLUÍDO — ${examinedTwo.size} evidências examinadas." else "NOVO CASO — homicídio no Hotel Aurora.")
+                    GoldButton("INICIAR / RETOMAR CASO 002") { activeCase="002";section="DOSSIÊ";registerEvent("Acesso ao Caso 002 — O Quarto 17") }
+                    SectionTitle("BIBLIOTECA DE DOCUMENTOS")
+                    Body("Registros catalogados dos dois inquéritos. Abra um item para consultar seu conteúdo.")
+                    (evidenceFiles+stationEvidence+sceneEvidence+caseTwoEvidence).forEach { file ->
+                        EvidenceCard(file,if(file.id>=200) file.id in examinedTwo else file.id in examined) {
+                            selectedEvidence=file
+                            registerEvent("Consulta ao arquivo: ${file.title}")
+                        }
+                    }
+                }
+                "HISTÓRICO" -> {
+                    SectionTitle("HISTÓRICO DO INVESTIGADOR")
+                    val totalEvidence=examined.size+examinedTwo.size
+                    val totalAnswers=interviewAnswers.size+answersTwo.size
+                    val completed=(if(ending.contains("CASO 001 CONCLUÍDO")) 1 else 0)+(if(endingTwo.contains("CASO 002 CONCLUÍDO")) 1 else 0)
+                    val score=totalEvidence*10+totalAnswers*5+confirmedLinks.size*8+completed*100-hintStep*3
+                    val rank=when { score>=350 -> "DETETIVE VETERANO"; score>=220 -> "INVESTIGADOR SÊNIOR"; score>=100 -> "ANALISTA"; else -> "RECRUTA" }
+                    InfoPanel("CLASSIFICAÇÃO",rank)
+                    InfoPanel("PONTUAÇÃO",score.coerceAtLeast(0).toString()+" pontos")
+                    InfoPanel("ESTATÍSTICAS","Casos concluídos: $completed/2\nEvidências registradas: $totalEvidence\nPerguntas feitas: $totalAnswers\nConexões confirmadas: ${confirmedLinks.size}\nDecisões registradas: ${historyLog.lines().count{it.isNotBlank()}}")
+                    SectionTitle("DECISÕES E ATIVIDADES")
+                    if(historyLog.isBlank()) Body("Suas ações aparecerão aqui conforme você examinar pistas, interrogar suspeitos e apresentar acusações.")
+                    else historyLog.lines().asReversed().forEach { Text(it,color=Muted,fontSize=12.sp,lineHeight=18.sp,modifier=Modifier.fillMaxWidth().padding(vertical=5.dp)) }
+                }
                 "DOSSIÊ" -> {
-                    SectionTitle("O DESAPARECIMENTO DE BLACKWOOD")
-                    Headline("A casa estava aberta. O jantar continuava servido. Elias Blackwood havia desaparecido.")
-                    Body("14 DE OUTUBRO  •  BLACKWOOD  •  02H17\n\nQuando a polícia chegou, não encontrou sinais de arrombamento. O telefone estava fora do gancho e o relógio da sala havia parado. Os vizinhos afirmaram não ter ouvido gritos.")
-                    InfoPanel("OBJETIVO","Descubra por que Elias saiu de casa, quem esteve com ele e para onde foi.")
-                    InfoPanel("PROGRESSO","Evidências examinadas: ${examined.size}/${allEvidence.size}  •  Conexões confirmadas: ${confirmedLinks.size}  •  Perguntas feitas: ${interviewAnswers.size}")
-                    if(solved) GoldButton("IR PARA A ESTAÇÃO FERROVIÁRIA →"){section="LOCAIS"}
+                    if(activeCase=="002") {
+                        SectionTitle("CASO 002  •  O QUARTO 17")
+                        Headline("Um jornalista foi encontrado morto em um quarto trancado por dentro. A queda de energia durou apenas nove minutos.")
+                        Body("HOTEL AURORA  •  22H14\n\nCaio Nogueira investigava a adulteração de um laudo médico. Na noite do crime, marcou um encontro no quarto 17. Três pessoas tinham motivo para silenciá-lo.")
+                        InfoPanel("OBJETIVO","Descubra como o assassino entrou e saiu do quarto, quem adulterou o laudo e apresente uma acusação sustentada por provas.")
+                        InfoPanel("PROGRESSO","Evidências examinadas: ${examinedTwo.size}/${caseTwoEvidence.size}  •  Perguntas feitas: ${answersTwo.size}/9")
+                        InfoPanel("CENA DO CRIME","A porta estava trancada por dentro. A janela também. O elevador de serviço foi usado durante a queda de energia.")
+                    } else {
+                        SectionTitle("O DESAPARECIMENTO DE BLACKWOOD")
+                        Headline("A casa estava aberta. O jantar continuava servido. Elias Blackwood havia desaparecido.")
+                        Body("14 DE OUTUBRO  •  BLACKWOOD  •  02H17\n\nQuando a polícia chegou, não encontrou sinais de arrombamento. O telefone estava fora do gancho e o relógio da sala havia parado. Os vizinhos afirmaram não ter ouvido gritos.")
+                        InfoPanel("OBJETIVO","Descubra por que Elias saiu de casa, quem esteve com ele e para onde foi.")
+                        InfoPanel("PROGRESSO","Evidências examinadas: ${examined.size}/${allEvidence.size}  •  Conexões confirmadas: ${confirmedLinks.size}  •  Perguntas feitas: ${interviewAnswers.size}")
+                        if(solved) GoldButton("IR PARA A ESTAÇÃO FERROVIÁRIA →"){section="LOCAIS"}
+                    }
                 }
                 "PISTAS" -> {
-                    SectionTitle("ARQUIVO DE EVIDÊNCIAS")
+                    if(activeCase=="002") {
+                        SectionTitle("EVIDÊNCIAS  /  HOTEL AURORA")
+                        Body("Examine os vestígios do quarto 17 e compare os registros do hotel.")
+                        caseTwoEvidence.forEach { file -> EvidenceCard(file,file.id in examinedTwo) { CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_BEEP);selectedEvidence=file;registerEvent("Pista selecionada no Caso 002: ${file.title}") } }
+                    } else {
+                        SectionTitle("ARQUIVO DE EVIDÊNCIAS")
                     Body("Abra documentos, fotografias e objetos. Toque novamente para rever os detalhes.")
                     allEvidence.forEach { EvidenceCard(it,it.id in examined){CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_BEEP);selectedEvidence=it} }
+                    }
                 }
                 "CONEXÕES" -> {
                     SectionTitle("MURAL DE CONEXÕES")
@@ -293,10 +384,17 @@ class MainActivity : ComponentActivity() {
                     if(106 in examined) InfoPanel("PASSAGEM ABERTA","Você encontrou a sala de serviço sob a estação. A investigação pode continuar.")
                 }
                 "PESSOAS" -> {
-                    SectionTitle("INTERROGATÓRIOS")
+                    if(activeCase=="002") {
+                        SectionTitle("INTERROGATÓRIOS  /  HOTEL AURORA")
+                        Body("Os três envolvidos ocultam partes da noite. Compare cada resposta com os vestígios.")
+                        caseTwoPeople.forEach { p -> PersonCard(p) { interviewPerson=p.name } }
+                        InfoPanel("REGISTRO","Respostas registradas: ${answersTwo.size}/9")
+                    } else {
+                        SectionTitle("INTERROGATÓRIOS")
                     Body("Escolha uma pessoa, selecione perguntas e compare as respostas com as evidências.")
                     people.forEach { p -> PersonCard(p){interviewPerson=p.name} }
                     InfoPanel("REGISTRO","Respostas registradas: ${interviewAnswers.size}/9")
+                    }
                 }
                 "ANÁLISE" -> {
                     SectionTitle("SUSPEITOS E CONTRADIÇÕES")
@@ -313,7 +411,36 @@ class MainActivity : ComponentActivity() {
                     if(analysisDone) InfoPanel("ANÁLISE REGISTRADA","Você concluiu uma primeira comparação dos relatos. Use as conexões e evidências antes de formular uma acusação.")
                 }
                 "ACUSAÇÃO" -> {
-                    SectionTitle("ACUSAÇÃO FINAL")
+                    if(activeCase=="002") {
+                        SectionTitle("ACUSAÇÃO FINAL  /  CASO 002")
+                        Body("Identifique quem usou a chave duplicada e o elevador durante a queda de energia.")
+                        if(endingTwo.isNotBlank()) {
+                            InfoPanel("DESFECHO REGISTRADO",endingTwo)
+                            GoldButton("REABRIR O CASO 002") { endingTwo="";accusationTwo="";registerEvent("Caso 002 reaberto") }
+                        } else {
+                            val needed=setOf(201,202,203,204,205,206)
+                            val evidenceReady=needed.all { it in examinedTwo }
+                            val answersReady=setOf("Tomás Vale|0","Tomás Vale|1","Tomás Vale|2","Elisa Moura|0","Dr. Vicente Lobo|0").all { it in answersTwo }
+                            InfoPanel("PROVAS",if(evidenceReady) "Seis evidências decisivas registradas." else "Faltam ${needed.count{it !in examinedTwo}} evidências decisivas.")
+                            InfoPanel("DEPOIMENTOS",if(answersReady) "Depoimentos essenciais obtidos." else "Ainda faltam respostas nos interrogatórios.")
+                            SectionTitle("QUEM É O RESPONSÁVEL?")
+                            caseTwoPeople.forEach { p ->
+                                Button(onClick={accusationTwo=p.name},modifier=Modifier.fillMaxWidth().padding(vertical=4.dp),colors=ButtonDefaults.buttonColors(containerColor=if(accusationTwo==p.name)Gold else Panel,contentColor=if(accusationTwo==p.name)Night else Pale)) { Text(p.name,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start) }
+                            }
+                            GoldButton("APRESENTAR ACUSAÇÃO") {
+                                if(accusationTwo.isNotBlank()) {
+                                    endingTwo=when {
+                                        accusationTwo=="Tomás Vale" && evidenceReady && answersReady ->
+                                            "CONCLUSÃO: TOMÁS VALE MATOU CAIO NOGUEIRA. A chave duplicada permitiu a entrada no quarto 17. Tomás acionou o elevador às 22h09 durante a queda de energia e usou a varanda de serviço para simular um quarto impossível de acessar. As cinzas eram parte do laudo original, que provava a adulteração. Caio descobriu que Tomás vendia acesso aos registros médicos e tentou expô-lo.\n\nCASO 002 CONCLUÍDO — O crime foi solucionado, mas a origem dos laudos adulterados ainda precisa ser investigada."
+                                        accusationTwo=="Tomás Vale" -> "CONCLUSÃO INCOMPLETA: Tomás é o principal suspeito, mas as provas e os depoimentos ainda não fecham a sequência dos acontecimentos. O caso permanece aberto."
+                                        else -> "ACUSAÇÃO CONTESTADA: as evidências não sustentam a acusação contra $accusationTwo. A chave duplicada e o registro do elevador ainda apontam para o funcionário noturno. O caso permanece aberto."
+                                    }
+                                    registerEvent("Caso 002: acusação apresentada contra $accusationTwo")
+                                }
+                            }
+                        }
+                    } else {
+SectionTitle("ACUSAÇÃO FINAL")
                     Body("Chegou a hora de reconstruir a noite de 14 de outubro. Uma acusação precisa de evidências, depoimentos e uma sequência de fatos que faça sentido.")
                     if(ending.isNotBlank()) {
                         InfoPanel("DESFECHO REGISTRADO",ending)
@@ -347,6 +474,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                    }
                 "CADERNO" -> {
                     SectionTitle("CADERNO DO INVESTIGADOR")
                     InfoPanel("NÍVEL DE DIFICULDADE","Escolha como deseja conduzir a investigação.")
@@ -413,15 +541,24 @@ class MainActivity : ComponentActivity() {
         )
     }
     selectedEvidence?.let { item ->
-        AlertDialog(onDismissRequest={selectedEvidence=null},containerColor=Panel,title={Text(item.title,color=Pale,fontWeight=FontWeight.Bold)},text={Column{Text(item.type+"  •  "+item.place.uppercase(),color=Gold,fontSize=10.sp);Spacer(Modifier.height(10.dp));Text(item.detail,color=Pale,lineHeight=23.sp)}},confirmButton={TextButton(onClick={examined=examined+item.id;CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK);selectedEvidence=null}){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
+        AlertDialog(onDismissRequest={selectedEvidence=null},containerColor=Panel,title={Text(item.title,color=Pale,fontWeight=FontWeight.Bold)},text={Column{Text(item.type+"  •  "+item.place.uppercase(),color=Gold,fontSize=10.sp);Spacer(Modifier.height(10.dp));Text(item.detail,color=Pale,lineHeight=23.sp)}},confirmButton={TextButton(onClick={
+            if(item.id>=200) { examinedTwo=examinedTwo+item.id;registerEvent("Caso 002: evidência registrada — ${item.title}") }
+            else { examined=examined+item.id;registerEvent("Caso 001: evidência registrada — ${item.title}") }
+            CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK);selectedEvidence=null
+        }){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
     }
     interviewPerson?.let { name ->
-        val qs=questions[name]?:emptyList()
+        val qs=if(activeCase=="002") caseTwoQuestions[name]?:emptyList() else questions[name]?:emptyList()
         AlertDialog(onDismissRequest={interviewPerson=null;currentQuestion=null},containerColor=Panel,title={Text("INTERROGATÓRIO  /  $name",color=Gold,fontSize=16.sp)},text={
             Column(Modifier.heightIn(max=430.dp).verticalScroll(rememberScrollState())) {
                 qs.forEachIndexed { index,q ->
                     val key="$name|$index"
-                    Button(onClick={currentQuestion=q;interviewAnswers=interviewAnswers+key;CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK)},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(key in interviewAnswers)Color(0xFF294238) else Color(0xFF1B2938),contentColor=Pale)){Text(q.title,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
+                    Button(onClick={
+                        currentQuestion=q
+                        if(activeCase=="002") { answersTwo=answersTwo+key;registerEvent("Caso 002: depoimento de $name — ${q.title}") }
+                        else { interviewAnswers=interviewAnswers+key;registerEvent("Caso 001: depoimento de $name — ${q.title}") }
+                        CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK)
+                    },modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(key in interviewAnswers)Color(0xFF294238) else Color(0xFF1B2938),contentColor=Pale)){Text(q.title,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
                     if(currentQuestion==q) {
                         Text(q.answer,color=Pale,fontSize=13.sp,lineHeight=21.sp)
                         Text("ANOTAÇÃO: ${q.clue}",color=Gold,fontSize=11.sp,lineHeight=17.sp)

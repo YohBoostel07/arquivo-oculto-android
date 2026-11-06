@@ -130,6 +130,8 @@ class MainActivity : ComponentActivity() {
         BrandHeader()
         Spacer(Modifier.height(60.dp))
         Text("DOSSIÊ 001  •  ACESSO RESTRITO",color=Gold,fontSize=11.sp,letterSpacing=2.sp)
+        Spacer(Modifier.height(14.dp))
+        SceneIllustration("CASA", Modifier.fillMaxWidth().height(210.dp))
         Spacer(Modifier.height(16.dp))
         Text("Toda verdade\ndeixa rastros.",color=Pale,fontSize=43.sp,lineHeight=49.sp,fontWeight=FontWeight.Light)
         Spacer(Modifier.height(16.dp))
@@ -245,6 +247,7 @@ class MainActivity : ComponentActivity() {
                 }
                 "LOCAIS" -> {
                     SectionTitle("ESTAÇÃO FERROVIÁRIA")
+                    SceneIllustration(area, Modifier.fillMaxWidth().height(238.dp))
                     Headline("A estação deveria estar abandonada. Mesmo assim, alguém esteve aqui depois da meia-noite.")
                     Body("O portão lateral está entreaberto. Há marcas recentes na poeira e uma lâmpada continua acesa.")
                     Row(horizontalArrangement=Arrangement.spacedBy(6.dp),modifier=Modifier.fillMaxWidth()) {
@@ -372,6 +375,8 @@ class MainActivity : ComponentActivity() {
     BoxWithConstraints(Modifier.fillMaxWidth().height(760.dp).border(1.dp,Gold.copy(alpha=.35f),RoundedCornerShape(12.dp)).background(Color(0xFF0B131E),RoundedCornerShape(12.dp))) {
         val cardWidth=(maxWidth-28.dp)/2
         Canvas(Modifier.fillMaxSize()) {
+            for (x in 0..size.width.toInt() step 28) drawLine(Color(0xFF263443).copy(alpha=.34f),Offset(x.toFloat(),0f),Offset(x.toFloat(),size.height),strokeWidth=1f)
+            for (y in 0..size.height.toInt() step 28) drawLine(Color(0xFF263443).copy(alpha=.34f),Offset(0f,y.toFloat()),Offset(size.width,y.toFloat()),strokeWidth=1f)
             confirmed.forEach { key ->
                 val ids=if(key.contains(",")) key.split(",").mapNotNull { it.toIntOrNull() } else key.split("-").mapNotNull { it.toIntOrNull() }
                 if(ids.size==2) {
@@ -404,7 +409,10 @@ class MainActivity : ComponentActivity() {
                     .background(if(node.id in selected)Color(0xFF3A3428) else Panel,RoundedCornerShape(9.dp))
                     .padding(9.dp)
             ) {
-                Text(node.kind,color=Gold,fontSize=8.sp,letterSpacing=.8.sp,fontWeight=FontWeight.Bold)
+                Row(verticalAlignment=Alignment.CenterVertically) {
+                    Box(Modifier.size(9.dp).background(if(node.id<0)Color(0xFF8DA8C4) else Gold,RoundedCornerShape(50)))
+                    Text("  "+node.kind,color=Gold,fontSize=8.sp,letterSpacing=.8.sp,fontWeight=FontWeight.Bold)
+                }
                 Spacer(Modifier.height(4.dp))
                 Text(node.title,color=Pale,fontSize=12.sp,lineHeight=15.sp,fontWeight=FontWeight.SemiBold,maxLines=2)
                 Text(node.subtitle,color=Muted,fontSize=9.sp,lineHeight=12.sp,maxLines=2)
@@ -421,6 +429,72 @@ private fun defaultBoardOffset(index:Int,width:Float):Offset {
     return Offset(x,y)
 }
 
+
+@Composable private fun SceneIllustration(area:String, modifier:Modifier=Modifier) {
+    Canvas(modifier.border(1.dp,Gold.copy(alpha=.55f),RoundedCornerShape(13.dp))) {
+        val w=size.width; val h=size.height
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF101D2C),Color(0xFF263445),Color(0xFF090E15))))
+        drawCircle(Color(0xFFD9D1B7).copy(alpha=.75f),radius=19f,center=Offset(w*.79f,h*.20f))
+        drawRect(Color(0xFF101722).copy(alpha=.58f),Offset(0f,h*.52f),androidx.compose.ui.geometry.Size(w,h*.48f))
+        if(area=="CASA") {
+            drawRect(Color(0xFF171D25),Offset(w*.27f,h*.36f),androidx.compose.ui.geometry.Size(w*.48f,h*.43f))
+            val roof=androidx.compose.ui.graphics.Path().apply { moveTo(w*.22f,h*.38f);lineTo(w*.51f,h*.12f);lineTo(w*.80f,h*.38f);close() }
+            drawPath(roof,Color(0xFF090D13))
+            drawRect(Color(0xFFB88B50),Offset(w*.43f,h*.49f),androidx.compose.ui.geometry.Size(w*.12f,h*.30f))
+            drawRect(Color(0xFFE6B96F),Offset(w*.61f,h*.47f),androidx.compose.ui.geometry.Size(w*.09f,h*.12f))
+        } else {
+            drawRect(Color(0xFF111923),Offset(w*.13f,h*.39f),androidx.compose.ui.geometry.Size(w*.74f,h*.36f))
+            val roof=androidx.compose.ui.graphics.Path().apply { moveTo(w*.08f,h*.40f);lineTo(w*.50f,h*.20f);lineTo(w*.92f,h*.40f);close() }
+            drawPath(roof,Color(0xFF080D13))
+            drawRect(Color(0xFFB68A4E).copy(alpha=.85f),Offset(w*.45f,h*.47f),androidx.compose.ui.geometry.Size(w*.10f,h*.22f))
+            for(i in 0..3) drawRect(Color(0xFFE4B96F).copy(alpha=.78f),Offset(w*(.22f+i*.16f),h*.48f),androidx.compose.ui.geometry.Size(w*.07f,h*.09f))
+            if(area=="PLATAFORMA" || area=="TÚNEL") {
+                drawLine(Color(0xFF687584),Offset(w*.12f,h*.91f),Offset(w*.48f,h*.72f),strokeWidth=5f)
+                drawLine(Color(0xFF687584),Offset(w*.88f,h*.91f),Offset(w*.52f,h*.72f),strokeWidth=5f)
+                for(i in 0..5) drawLine(Color(0xFF9A8B70).copy(alpha=.75f),Offset(w*(.18f+i*.12f),h*(.88f-i*.027f)),Offset(w*(.82f-i*.12f),h*(.88f-i*.027f)),strokeWidth=3f)
+            }
+            if(area=="GUARITA") {
+                drawRect(Color(0xFF080D13),Offset(w*.68f,h*.57f),androidx.compose.ui.geometry.Size(w*.13f,h*.18f))
+                drawCircle(Gold.copy(alpha=.8f),radius=7f,center=Offset(w*.75f,h*.65f))
+            }
+        }
+        drawRect(Brush.horizontalGradient(listOf(Color.Black.copy(alpha=.34f),Color.Transparent,Color.Black.copy(alpha=.34f))))
+        drawRoundRect(Color(0xCC080D14),topLeft=Offset(12f,h-37f),size=androidx.compose.ui.geometry.Size(w*.55f,25f),cornerRadius=androidx.compose.ui.geometry.CornerRadius(5f))
+    }
+    Text(area.uppercase(),color=Gold,fontSize=9.sp,letterSpacing=1.6.sp,modifier=Modifier.padding(start=13.dp,top=6.dp))
+}
+@Composable private fun EvidenceThumbnail(type:String,modifier:Modifier=Modifier) {
+    Canvas(modifier.border(1.dp,Gold.copy(alpha=.4f),RoundedCornerShape(7.dp)).background(Color(0xFF202A34),RoundedCornerShape(7.dp))) {
+        val w=size.width; val h=size.height
+        when(type) {
+            "FOTOGRAFIA" -> {
+                drawRect(Color(0xFFB5A88B),Offset(w*.12f,h*.12f),androidx.compose.ui.geometry.Size(w*.76f,h*.76f))
+                drawRect(Color(0xFF344657),Offset(w*.2f,h*.22f),androidx.compose.ui.geometry.Size(w*.6f,h*.5f))
+                drawCircle(Color(0xFFD7B477),radius=7f,center=Offset(w*.68f,h*.35f))
+                drawLine(Color(0xFF111923),Offset(w*.24f,h*.68f),Offset(w*.74f,h*.48f),strokeWidth=3f)
+            }
+            "DOCUMENTO","CARTA","REGISTRO" -> {
+                drawRect(Color(0xFFD8CFB8),Offset(w*.24f,h*.08f),androidx.compose.ui.geometry.Size(w*.52f,h*.84f))
+                for(i in 0..4) drawLine(Color(0xFF6E6A60),Offset(w*.31f,h*(.25f+i*.12f)),Offset(w*.68f,h*(.25f+i*.12f)),strokeWidth=2f)
+            }
+            else -> {
+                drawCircle(Color(0xFF9B8054),radius=w*.25f,center=Offset(w*.5f,h*.48f))
+                drawCircle(Color(0xFF252B32),radius=w*.16f,center=Offset(w*.5f,h*.48f))
+                drawLine(Gold,Offset(w*.5f,h*.12f),Offset(w*.5f,h*.82f),strokeWidth=2f)
+            }
+        }
+    }
+}
+@Composable private fun PersonPortrait(name:String,modifier:Modifier=Modifier) {
+    Canvas(modifier.border(1.dp,Gold.copy(alpha=.5f),RoundedCornerShape(9.dp)).background(Color(0xFF263444),RoundedCornerShape(9.dp))) {
+        val w=size.width; val h=size.height
+        drawRect(Brush.verticalGradient(listOf(Color(0xFF536477),Color(0xFF111923))))
+        drawCircle(Color(0xFFD0B18A),radius=w*.22f,center=Offset(w*.5f,h*.34f))
+        drawOval(Color(0xFF18212C),topLeft=Offset(w*.18f,h*.52f),size=androidx.compose.ui.geometry.Size(w*.64f,h*.54f))
+        drawRect(Color(0xFF111923).copy(alpha=.6f),Offset(0f,h*.78f),androidx.compose.ui.geometry.Size(w,h*.22f))
+    }
+}
+
 @Composable private fun SectionTitle(value:String){Spacer(Modifier.height(7.dp));Text(value,color=Gold,fontSize=11.sp,letterSpacing=1.4.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(10.dp))}
 @Composable private fun Headline(value:String){Text(value,color=Pale,fontSize=22.sp,lineHeight=30.sp,fontWeight=FontWeight.SemiBold);Spacer(Modifier.height(12.dp))}
 @Composable private fun Body(value:String){Text(value,color=Muted,fontSize=14.sp,lineHeight=23.sp);Spacer(Modifier.height(12.dp))}
@@ -431,8 +505,14 @@ private fun defaultBoardOffset(index:Int,width:Float):Offset {
 }
 @Composable private fun EvidenceCard(item:Evidence,examined:Boolean,onClick:()->Unit){
     Column(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).clickable{onClick()}.padding(13.dp)){
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text(item.type,color=Gold,fontSize=9.sp,letterSpacing=1.sp);Text(if(examined)"EXAMINADA ✓" else "NÃO EXAMINADA",color=if(examined)Color(0xFF9BC7A5) else Muted,fontSize=9.sp)}
-        Spacer(Modifier.height(6.dp));Text(item.title,color=Pale,fontSize=16.sp,fontWeight=FontWeight.SemiBold);Text(item.place,color=Muted,fontSize=11.sp);Spacer(Modifier.height(5.dp));Text(item.description,color=Pale.copy(alpha=.85f),fontSize=12.sp,lineHeight=18.sp);Text("EXAMINAR DETALHES  →",color=Gold,fontSize=10.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
+        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+            EvidenceThumbnail(item.type,Modifier.size(76.dp,62.dp))
+            Column(Modifier.weight(1f).padding(start=11.dp)) {
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Text(item.type,color=Gold,fontSize=9.sp,letterSpacing=1.sp);Text(if(examined)"EXAMINADA ✓" else "NÃO EXAMINADA",color=if(examined)Color(0xFF9BC7A5) else Muted,fontSize=9.sp)}
+                Spacer(Modifier.height(6.dp));Text(item.title,color=Pale,fontSize=16.sp,fontWeight=FontWeight.SemiBold);Text(item.place,color=Muted,fontSize=11.sp)
+            }
+        }
+        Spacer(Modifier.height(6.dp));Spacer(Modifier.height(5.dp));Text(item.description,color=Pale.copy(alpha=.85f),fontSize=12.sp,lineHeight=18.sp);Text("EXAMINAR DETALHES  →",color=Gold,fontSize=10.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
     }
 }
 @Composable private fun SelectableEvidence(item:Evidence,selected:Boolean,onClick:()->Unit){
@@ -441,7 +521,10 @@ private fun defaultBoardOffset(index:Int,width:Float):Offset {
     }
 }
 @Composable private fun PersonCard(person:Person,onClick:()->Unit){
-    Column(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).padding(13.dp)){
-        Text("TESTEMUNHA / SUSPEITO",color=Gold,fontSize=9.sp);Spacer(Modifier.height(5.dp));Text(person.name,color=Pale,fontSize=17.sp,fontWeight=FontWeight.SemiBold);Text(person.role,color=Muted,fontSize=11.sp);Spacer(Modifier.height(6.dp));Text(person.summary,color=Pale,fontSize=12.sp,lineHeight=18.sp);TextButton(onClick=onClick,contentPadding=PaddingValues(0.dp)){Text("INICIAR INTERROGATÓRIO →",color=Gold,fontSize=10.sp,fontWeight=FontWeight.Bold)}
+    Row(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).padding(13.dp),verticalAlignment=Alignment.CenterVertically){
+        PersonPortrait(person.name,Modifier.size(78.dp))
+        Column(Modifier.weight(1f).padding(start=12.dp)) {
+            Text("TESTEMUNHA / SUSPEITO",color=Gold,fontSize=9.sp);Spacer(Modifier.height(5.dp));Text(person.name,color=Pale,fontSize=17.sp,fontWeight=FontWeight.SemiBold);Text(person.role,color=Muted,fontSize=11.sp);Spacer(Modifier.height(6.dp));Text(person.summary,color=Pale,fontSize=12.sp,lineHeight=18.sp);TextButton(onClick=onClick,contentPadding=PaddingValues(0.dp)){Text("INTERROGAR →",color=Gold,fontSize=10.sp,fontWeight=FontWeight.Bold)}
+        }
     }
 }

@@ -180,12 +180,15 @@ class MainActivity : ComponentActivity() {
     var selectedSuspect by remember { mutableStateOf("Arthur Bell") }
     var analysisDone by remember { mutableStateOf(prefs.getBoolean("analysis_done",false)) }
     var theory by remember { mutableStateOf(prefs.getString("theory","")?:"") }
+    var accusation by remember { mutableStateOf(prefs.getString("accusation","")?:"") }
+    var ending by remember { mutableStateOf(prefs.getString("ending","")?:"") }
 
-    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory) {
+    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending) {
         prefs.edit().putStringSet("examined",examined.map{it.toString()}.toSet())
             .putString("notes",notes).putBoolean("station_unlocked",solved)
             .putStringSet("links",confirmedLinks).putStringSet("answers",interviewAnswers)
-            .putBoolean("analysis_done",analysisDone).putString("theory",theory).apply()
+            .putBoolean("analysis_done",analysisDone).putString("theory",theory)
+            .putString("accusation",accusation).putString("ending",ending).apply()
     }
     Column(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=16.dp)) {
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
@@ -193,7 +196,7 @@ class MainActivity : ComponentActivity() {
             TextButton(onClick=onBack){Text("SAIR ×",color=Muted)}
         }
         Spacer(Modifier.height(10.dp))
-        val tabs=listOf("DOSSIÊ","PISTAS","CONEXÕES","LOCAIS","PESSOAS","ANÁLISE","CADERNO")
+        val tabs=listOf("DOSSIÊ","PISTAS","CONEXÕES","LOCAIS","PESSOAS","ANÁLISE","ACUSAÇÃO","CADERNO")
         Column(verticalArrangement=Arrangement.spacedBy(5.dp)) {
             tabs.chunked(4).forEach { group ->
                 Row(horizontalArrangement=Arrangement.spacedBy(5.dp),modifier=Modifier.fillMaxWidth()) {
@@ -285,6 +288,41 @@ class MainActivity : ComponentActivity() {
                     InfoPanel("CONFIABILIDADE DO DEPOIMENTO","Perguntas respondidas a esta pessoa: $relevant de 3. As contradições acima são pontos para investigar, não uma prova automática de culpa.")
                     GoldButton("CONCLUIR ANÁLISE DOS DEPOIMENTOS"){analysisDone=interviewAnswers.size>=3}
                     if(analysisDone) InfoPanel("ANÁLISE REGISTRADA","Você concluiu uma primeira comparação dos relatos. Use as conexões e evidências antes de formular uma acusação.")
+                }
+                "ACUSAÇÃO" -> {
+                    SectionTitle("ACUSAÇÃO FINAL")
+                    Body("Chegou a hora de reconstruir a noite de 14 de outubro. Uma acusação precisa de evidências, depoimentos e uma sequência de fatos que faça sentido.")
+                    if(ending.isNotBlank()) {
+                        InfoPanel("DESFECHO REGISTRADO",ending)
+                        GoldButton("REABRIR A INVESTIGAÇÃO"){ending="";accusation=""}
+                    } else {
+                        InfoPanel("REQUISITOS PARA UMA CONCLUSÃO","Registre as pistas da chave T-04, das iniciais A.B., do livro de turnos, da fotografia escondida e do mapa do ramal. Interrogue Arthur e o inspetor e conclua a análise dos depoimentos.")
+                        val requiredEvidence=setOf(103,104,109,110,112)
+                        val requiredAnswers=setOf("Arthur Bell|1","Arthur Bell|2","Inspetor Raul Mendes|1")
+                        val evidenceReady=requiredEvidence.all { it in examined }
+                        val interviewsReady=requiredAnswers.all { it in interviewAnswers }
+                        InfoPanel("EVIDÊNCIAS",if(evidenceReady) "✓ Todas as cinco pistas decisivas foram registradas." else "Faltam ${requiredEvidence.count { it !in examined }} das cinco pistas decisivas.")
+                        InfoPanel("DEPOIMENTOS",if(interviewsReady) "✓ Os depoimentos essenciais foram obtidos." else "Ainda faltam respostas essenciais nos interrogatórios.")
+                        InfoPanel("ANÁLISE",if(analysisDone) "✓ Comparação dos depoimentos concluída." else "Conclua a análise na aba ANÁLISE.")
+                        SectionTitle("QUEM VOCÊ ACUSA?")
+                        people.forEach { person ->
+                            Button(onClick={accusation=person.name},modifier=Modifier.fillMaxWidth().padding(vertical=4.dp),colors=ButtonDefaults.buttonColors(containerColor=if(accusation==person.name)Gold else Panel,contentColor=if(accusation==person.name)Night else Pale)) {
+                                Text(person.name,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start,fontWeight=FontWeight.SemiBold)
+                            }
+                        }
+                        GoldButton("APRESENTAR ACUSAÇÃO") {
+                            if(accusation.isNotBlank()) {
+                                ending=when {
+                                    accusation=="Arthur Bell" && evidenceReady && interviewsReady && analysisDone ->
+                                        "CONCLUSÃO: ARTHUR BELL FOI O ELO ENTRE ELIAS E A ESTAÇÃO.\\n\\nA chave T-04, o registro de acesso às 23h32, as iniciais no banco e a fotografia escondida desmontam o álibi de Arthur. Confrontado com o mapa do ramal, ele admite que ajudou Elias a chegar ao depósito do norte.\\n\\nElias não foi levado à força: planejou desaparecer depois de descobrir uma rede clandestina que operava pela antiga estação. Arthur ajudou a apagar os rastros. O inspetor Raul recebeu ordens para encerrar a investigação antes que a rota fosse descoberta.\\n\\nCASO 001 CONCLUÍDO — O desaparecimento foi planejado, mas a rede por trás dele continua sem identificação."
+                                    accusation=="Arthur Bell" ->
+                                        "CONCLUSÃO INCOMPLETA: Arthur Bell continua sendo o principal suspeito, mas as provas reunidas não sustentam uma acusação definitiva. O depoimento dele apresenta contradições, porém faltam registros e confirmações. O caso permanece oficialmente aberto."
+                                    else ->
+                                        "ACUSAÇÃO CONTESTADA: as evidências da estação não sustentam a acusação contra $accusation. A linha do tempo continua apontando para a passagem técnica e para o acesso registrado às 23h32. A acusação foi arquivada por falta de correspondência entre suspeita e provas. O caso permanece aberto."
+                                }
+                            }
+                        }
+                    }
                 }
                 "CADERNO" -> {
                     SectionTitle("CADERNO DO INVESTIGADOR")

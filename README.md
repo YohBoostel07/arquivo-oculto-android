@@ -1,32 +1,21 @@
 # Arquivo Oculto
 
-Jogo de investigação criminal cooperativa para Android, desenvolvido em Godot 4.
+Projeto reiniciado do zero em Godot 4. Nenhum código, cena ou sistema anterior foi reaproveitado.
 
-## Conceito
-Investigue casos por meio de documentos, fotografias, evidências, depoimentos e conexões entre suspeitos. A proposta é uma experiência de suspense e dedução, não um jogo de exploração 3D.
+## Estado atual
+- Projeto Godot novo.
+- Interface inicial original em 2D.
+- Primeiro dossiê apresentado como protótipo narrativo.
+- Multiplayer, investigação interativa completa, salvamento e sincronização ainda não implementados.
+- APK depende da validação do ambiente de exportação Android no GitHub Actions.
 
-## Caso inicial
-**Caso 001 — O desaparecimento de Blackwood**
-
-O pacote estruturado do caso está em `content/case_001.json`. Ele reúne o resumo, linha do tempo, documentos, evidências, suspeitos e perguntas de investigação. A solução final permanece reservada para a etapa de conclusão, evitando revelar antecipadamente o mistério.
-
-## Estado do desenvolvimento
-- [x] Estrutura inicial do projeto Godot
-- [x] Interface inicial e navegação do caso
-- [x] Protótipo local de evidências, suspeitos e anotações
-- [x] Primeira versão funcional do mural de conexões
-- [x] Conteúdo-base estruturado do Caso 001 (JSON)
-- [x] Telas iniciais de documentos e depoimentos integradas à interface
-- [ ] Arte final para fotografias, documentos e retratos
-- [ ] Persistência local de evidências, conexões e anotações (implementada no código; aguardando validação de compilação)
-- [ ] Salas privadas e multiplayer online para 2 a 4 jogadores (modo cooperativo e individual)
-- [ ] Exportação e testes em Android
+## Executar
+Abra a pasta do projeto no Godot 4.4 ou superior e execute a cena principal.
 
 ## Próximas etapas
-1. Integrar o pacote JSON às telas de documentos e depoimentos.
-2. Implementar salvamento local do caso e das anotações.
-3. Produzir os assets visuais do Caso 001.
-4. Validar a compilação Godot e preparar a exportação Android.
-5. Projetar e implementar o backend multiplayer e a sincronização das salas.
-
-O escopo confirmado é de 2 a 4 jogadores, com modo cooperativo em tempo real e modo de investigação individual com compartilhamento opcional. O multiplayer online ainda depende da implementação e hospedagem de um servidor; a interface local não será tratada como multiplayer funcional. Consulte `docs/PLANO_DE_DESENVOLVIMENTO.md` para as etapas e critérios de validação.
+1. Validar importação e execução no Godot.
+2. Construir a primeira cena de investigação.
+3. Implementar evidências, inventário, mural de conexões e decisões.
+4. Adicionar salvamento local.
+5. Implementar multiplayer real para 2 a 4 jogadores com backend e sincronização.
+6. Validar exportação e instalação Android.

@@ -1,0 +1,20 @@
+name: Validar projeto Godot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.4.1
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+      - name: Importar recursos e validar projeto
+        run: godot --headless --editor --path . --quit
+      - name: Executar verificação de inicialização
+        run: godot --headless --path . --quit-after 5

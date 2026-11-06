@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:4.4.1
+    # A imagem instala templates, SDK, JDK e keystore em /root.
+    # O runner define HOME=/github/home; restauramos o HOME original da imagem.
+    env:
+      HOME: /root
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
@@ -24,6 +28,9 @@ jobs:
 
       - name: Exportar APK de depuração
         run: godot --headless --path . --export-debug "Android" build/ArquivoOculto.apk
+
+      - name: Verificar APK gerado
+        run: test -s build/ArquivoOculto.apk
 
       - name: Publicar APK para download
         uses: actions/upload-artifact@v4

@@ -298,7 +298,7 @@ class MainActivity : ComponentActivity() {
                     } else {
                         InfoPanel("REQUISITOS PARA UMA CONCLUSÃO","Registre as pistas da chave T-04, das iniciais A.B., do livro de turnos, da fotografia escondida e do mapa do ramal. Interrogue Arthur e o inspetor e conclua a análise dos depoimentos.")
                         val requiredEvidence=setOf(103,104,109,110,112)
-                        val requiredAnswers=setOf("Arthur Bell|1","Arthur Bell|2","Inspetor Raul Mendes|1")
+                        val requiredAnswers=setOf("Arthur Bell|1","Arthur Bell|2","Inspetor Raul Mendes|2")
                         val evidenceReady=requiredEvidence.all { it in examined }
                         val interviewsReady=requiredAnswers.all { it in interviewAnswers }
                         InfoPanel("EVIDÊNCIAS",if(evidenceReady) "✓ Todas as cinco pistas decisivas foram registradas." else "Faltam ${requiredEvidence.count { it !in examined }} das cinco pistas decisivas.")

@@ -18,18 +18,29 @@ jobs:
       - name: Baixar projeto limpo
         uses: actions/checkout@v4
 
-      - name: Conferir ambiente Android e Godot
+      - name: Preparar configurações do Godot no runner
+        run: |
+          mkdir -p "$HOME/.config/godot" "$HOME/.local/share/godot"
+          cp -a /root/.config/godot/. "$HOME/.config/godot/"
+          cp -a /root/.local/share/godot/export_templates "$HOME/.local/share/godot/"
+          if [ ! -s /root/debug.keystore ]; then
+            keytool -genkeypair -v -keystore /root/debug.keystore -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
+          fi
+          test -s /root/debug.keystore
+          mkdir -p build
+
+      - name: Conferir ferramentas e templates Android
         run: |
           godot --version
           test -f "$HOME/.local/share/godot/export_templates/4.4.1.stable/android_debug.apk"
-          test -f /root/debug.keystore
-          mkdir -p build
+          test -d "$ANDROID_HOME/platforms/android-33"
+          test -d "$ANDROID_HOME/build-tools/33.0.2"
 
       - name: Importar e validar projeto
         run: godot --headless --editor --path . --quit
 
       - name: Gerar APK Android arm64
-        run: godot --headless --path . --export-debug "Android" build/ArquivoOculto.apk
+        run: godot --headless --verbose --path . --export-debug "Android" build/ArquivoOculto.apk
 
       - name: Validar arquivo APK
         run: |

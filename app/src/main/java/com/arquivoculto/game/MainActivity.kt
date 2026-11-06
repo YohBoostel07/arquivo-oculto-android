@@ -197,16 +197,20 @@ class MainActivity : ComponentActivity() {
     var analysisDone by remember { mutableStateOf(prefs.getBoolean("analysis_done",false)) }
     var theory by remember { mutableStateOf(prefs.getString("theory","")?:"") }
     var soundEnabled by remember { mutableStateOf(prefs.getBoolean("sound_enabled",true)) }
+    var hintsEnabled by remember { mutableStateOf(prefs.getBoolean("hints_enabled",true)) }
+    var difficulty by remember { mutableStateOf(prefs.getString("difficulty","PADRÃO")?:"PADRÃO") }
+    var hintStep by remember { mutableIntStateOf(prefs.getInt("hint_step",0)) }
     var accusation by remember { mutableStateOf(prefs.getString("accusation","")?:"") }
     var ending by remember { mutableStateOf(prefs.getString("ending","")?:"") }
 
-    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending,soundEnabled) {
+    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending,soundEnabled,hintsEnabled,difficulty,hintStep) {
         prefs.edit().putStringSet("examined",examined.map{it.toString()}.toSet())
             .putString("notes",notes).putBoolean("station_unlocked",solved)
             .putStringSet("links",confirmedLinks).putStringSet("answers",interviewAnswers)
             .putBoolean("analysis_done",analysisDone).putString("theory",theory)
             .putString("accusation",accusation).putString("ending",ending)
-            .putBoolean("sound_enabled",soundEnabled).apply()
+            .putBoolean("sound_enabled",soundEnabled).putBoolean("hints_enabled",hintsEnabled)
+            .putString("difficulty",difficulty).putInt("hint_step",hintStep).apply()
     }
     Column(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=16.dp)) {
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
@@ -345,6 +349,36 @@ class MainActivity : ComponentActivity() {
                 }
                 "CADERNO" -> {
                     SectionTitle("CADERNO DO INVESTIGADOR")
+                    InfoPanel("NÍVEL DE DIFICULDADE","Escolha como deseja conduzir a investigação.")
+                    Row(horizontalArrangement=Arrangement.spacedBy(8.dp),modifier=Modifier.fillMaxWidth()) {
+                        listOf("PADRÃO","DESAFIADOR").forEach { level ->
+                            Button(onClick={difficulty=level},modifier=Modifier.weight(1f),colors=ButtonDefaults.buttonColors(containerColor=if(difficulty==level)Gold else Panel,contentColor=if(difficulty==level)Night else Pale)) { Text(level,fontSize=10.sp) }
+                        }
+                    }
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("DICAS OPCIONAIS",color=Gold,fontSize=11.sp,fontWeight=FontWeight.Bold)
+                            Text(if(hintsEnabled) "Ativadas — você decide quando revelar." else "Desativadas — investigue sem assistência.",color=Muted,fontSize=11.sp)
+                        }
+                        Switch(checked=hintsEnabled,onCheckedChange={hintsEnabled=it})
+                    }
+                    if(hintsEnabled) {
+                        val hintList=if(difficulty=="DESAFIADOR") listOf(
+                            "Revise os horários registrados antes e depois do desaparecimento.",
+                            "Uma pessoa negou presença, mas deixou sinais de acesso na estação."
+                        ) else listOf(
+                            "Compare a ligação das 23h39 com o relógio parado às 23h46. Os dois registros ajudam a montar a linha do tempo.",
+                            "A planta da estação e a chave T-04 apontam para uma passagem que não aparece no acesso principal.",
+                            "O livro de turnos registra A.B. às 23h32. Compare as iniciais com os depoimentos de Arthur.",
+                            "A fotografia escondida, as marcas no banco e o mapa do ramal ajudam a reconstruir o destino de Elias."
+                        )
+                        InfoPanel("DICAS REVELADAS","${hintStep.coerceAtMost(hintList.size)} de ${hintList.size}")
+                        if(hintStep>0) InfoPanel("DICA ${hintStep}",hintList[hintStep.coerceAtMost(hintList.size)-1])
+                        GoldButton(if(hintStep>=hintList.size) "TODAS AS DICAS REVELADAS" else "REVELAR PRÓXIMA DICA") {
+                            if(hintStep<hintList.size) { hintStep++; CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK) }
+                        }
+                        if(hintStep>=hintList.size) TextButton(onClick={hintStep=0}) { Text("REINICIAR DICAS",color=Muted) }
+                    }
                     Body("Anote horários, detalhes e contradições. Suas anotações são salvas automaticamente no aparelho.")
                     OutlinedTextField(value=notes,onValueChange={notes=it},modifier=Modifier.fillMaxWidth().height(170.dp),placeholder={Text("Escreva suas observações...",color=Muted)},minLines=4)
                     Spacer(Modifier.height(14.dp))

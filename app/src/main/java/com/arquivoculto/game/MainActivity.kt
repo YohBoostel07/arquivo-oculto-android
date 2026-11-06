@@ -166,6 +166,7 @@ class MainActivity : ComponentActivity() {
     var section by remember { mutableStateOf("DOSSIÊ") }
     var area by remember { mutableStateOf("PLATAFORMA") }
     var selectedEvidence by remember { mutableStateOf<Evidence?>(null) }
+    var selectedSceneObject by remember { mutableStateOf<SceneObject?>(null) }
     var examined by remember { mutableStateOf(prefs.getStringSet("examined",emptySet())?.mapNotNull{it.toIntOrNull()}?.toSet()?:emptySet()) }
     var notes by remember { mutableStateOf(prefs.getString("notes","")?:"") }
     var solved by remember { mutableStateOf(prefs.getBoolean("station_unlocked",false)) }
@@ -253,6 +254,12 @@ class MainActivity : ComponentActivity() {
                     val areaEvidence=when(area){"PLATAFORMA"->stationEvidence.filter{it.id==102||it.id==104};"GUARITA"->stationEvidence.filter{it.id==103};else->stationEvidence.filter{it.id==101||it.id==105}}
                     InfoPanel("ÁREA: $area",when(area){"PLATAFORMA"->"A luz ainda funciona. Há marcas recentes no banco e sinais de que duas pessoas estiveram aqui.";"GUARITA"->"A guarita está revirada. Um molho de chaves parece ter sido escondido às pressas.";else->"A porta técnica está fechada. A planta e a chave podem revelar como entrar."})
                     areaEvidence.forEach { EvidenceCard(it,it.id in examined){selectedEvidence=it} }
+                    Spacer(Modifier.height(8.dp))
+                    SectionTitle("OBJETOS INTERATIVOS")
+                    Body("Explore os detalhes do ambiente. Alguns objetos escondem evidências e exigem que você encontre a pista certa.")
+                    sceneObjects.filter { it.room==area }.forEach { obj ->
+                        SceneObjectCard(obj,obj.id in examined,obj.requirement==null || obj.requirement in examined) { selectedSceneObject=obj }
+                    }
                     if(area=="TÚNEL"&&103 in examined) GoldButton("USAR CHAVE T-04 NA PORTA"){ examined=examined+106; selectedEvidence=Evidence(106,"LOCAL DESBLOQUEADO","Passagem subterrânea","Túnel T-04","A porta foi aberta com a chave encontrada na guarita.","O túnel segue sob os trilhos e termina em uma sala de serviço. Há marcas de arrasto no chão e um pedaço de tecido azul preso a uma grade.") }
                     if(106 in examined) InfoPanel("PASSAGEM ABERTA","Você encontrou a sala de serviço sob a estação. A investigação pode continuar.")
                 }
@@ -291,6 +298,26 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+    selectedSceneObject?.let { obj ->
+        AlertDialog(
+            onDismissRequest={selectedSceneObject=null},
+            containerColor=Panel,
+            title={Text(obj.title,color=Pale,fontWeight=FontWeight.Bold)},
+            text={Column {
+                Text("OBJETO INTERATIVO  •  ${obj.room}",color=Gold,fontSize=10.sp)
+                Spacer(Modifier.height(8.dp))
+                Text(obj.description,color=Pale,lineHeight=21.sp)
+                if(obj.id in examined) { Spacer(Modifier.height(10.dp)); Text(obj.discovery,color=Muted,lineHeight=21.sp) }
+            }},
+            confirmButton={TextButton(onClick={
+                if(obj.requirement==null || obj.requirement in examined) {
+                    examined=examined+obj.id
+                    selectedEvidence=sceneEvidence.firstOrNull { it.id==obj.id }
+                }
+                selectedSceneObject=null
+            }) { Text(if(obj.id in examined) "FECHAR" else if(obj.requirement!=null && obj.requirement !in examined) "PISTA NECESSÁRIA" else "EXAMINAR",color=Gold) }}
+        )
+    }
     selectedEvidence?.let { item ->
         AlertDialog(onDismissRequest={selectedEvidence=null},containerColor=Panel,title={Text(item.title,color=Pale,fontWeight=FontWeight.Bold)},text={Column{Text(item.type+"  •  "+item.place.uppercase(),color=Gold,fontSize=10.sp);Spacer(Modifier.height(10.dp));Text(item.detail,color=Pale,lineHeight=23.sp)}},confirmButton={TextButton(onClick={examined=examined+item.id;selectedEvidence=null}){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
     }
@@ -308,6 +335,24 @@ class MainActivity : ComponentActivity() {
                 }
             }
         },confirmButton={TextButton(onClick={interviewPerson=null;currentQuestion=null}){Text("ENCERRAR",color=Gold)}})
+    }
+}
+
+@Composable private fun SceneObjectCard(obj:SceneObject,examined:Boolean,available:Boolean,onClick:()->Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical=4.dp)
+            .border(1.dp,if(examined)Gold.copy(alpha=.55f) else Line,RoundedCornerShape(11.dp))
+            .background(Panel,RoundedCornerShape(11.dp)).clickable(onClick=onClick).padding(13.dp),
+        verticalAlignment=Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(38.dp).border(1.dp,if(available)Gold.copy(alpha=.6f) else Line,RoundedCornerShape(9.dp)),contentAlignment=Alignment.Center) {
+            Text(if(examined) "✓" else "⌕",color=if(available)Gold else Muted,fontSize=19.sp,fontWeight=FontWeight.Bold)
+        }
+        Column(Modifier.weight(1f).padding(start=11.dp)) {
+            Text(obj.title,color=Pale,fontSize=14.sp,fontWeight=FontWeight.SemiBold)
+            Text(if(examined) "EVIDÊNCIA REGISTRADA" else if(!available) "REQUER OUTRA EVIDÊNCIA" else "EXAMINAR OBJETO",color=if(examined)Color(0xFF9BC7A5) else Gold,fontSize=9.sp,letterSpacing=.6.sp)
+        }
+        Text("›",color=Gold,fontSize=24.sp)
     }
 }
 

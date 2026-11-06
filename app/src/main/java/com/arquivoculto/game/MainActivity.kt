@@ -195,7 +195,7 @@ class MainActivity : ComponentActivity() {
             GoldButton("CONTINUAR INVESTIGAÇÃO  →",onOpen)
         }
         Spacer(Modifier.height(24.dp))
-        Text("VERSÃO 1.0.0  •  CASO 001: DESFECHO",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
+        Text("VERSÃO 1.5.0  •  ARQUIVO DE CASOS",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
     }
 }
 @Composable private fun BrandHeader() {
@@ -234,7 +234,7 @@ class MainActivity : ComponentActivity() {
     var hintStep by remember { mutableIntStateOf(prefs.getInt("hint_step",0)) }
     var accusation by remember { mutableStateOf(prefs.getString("accusation","")?:"") }
     var ending by remember { mutableStateOf(prefs.getString("ending","")?:"") }
-    var activeCase by remember { mutableStateOf(prefs.getString("active_case","001")?:"") }
+    var activeCase by remember { mutableStateOf(prefs.getString("active_case","001")?:"001") }
     var examinedTwo by remember { mutableStateOf(prefs.getStringSet("case2_examined",emptySet())?.mapNotNull{it.toIntOrNull()}?.toSet()?:emptySet()) }
     var answersTwo by remember { mutableStateOf(prefs.getStringSet("case2_answers",emptySet())?.toSet()?:emptySet()) }
     var accusationTwo by remember { mutableStateOf(prefs.getString("case2_accusation","")?:"") }
@@ -350,7 +350,7 @@ class MainActivity : ComponentActivity() {
                     GoldButton("ANALISAR RELAÇÃO SELECIONADA") {
                         if(selectedLinks.size==2) {
                             val key=selectedLinks.sorted().joinToString(",")
-                            if(validLinks.any { it==selectedLinks }) { confirmedLinks=confirmedLinks+key; CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK) } else { CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_NACK) }
+                            if(validLinks.any { it==selectedLinks }) { confirmedLinks=confirmedLinks+key;registerEvent("Caso 001: conexão confirmada — "+key);CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK) } else { CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_NACK) }
                             selectedLinks=emptySet()
                         }
                     }
@@ -444,7 +444,7 @@ SectionTitle("ACUSAÇÃO FINAL")
                     Body("Chegou a hora de reconstruir a noite de 14 de outubro. Uma acusação precisa de evidências, depoimentos e uma sequência de fatos que faça sentido.")
                     if(ending.isNotBlank()) {
                         InfoPanel("DESFECHO REGISTRADO",ending)
-                        GoldButton("REABRIR A INVESTIGAÇÃO"){ending="";accusation=""}
+                        GoldButton("REABRIR A INVESTIGAÇÃO"){ending="";accusation="";registerEvent("Caso 001 reaberto")}
                     } else {
                         InfoPanel("REQUISITOS PARA UMA CONCLUSÃO","Registre as pistas da chave T-04, das iniciais A.B., do livro de turnos, da fotografia escondida e do mapa do ramal. Interrogue Arthur e o inspetor e conclua a análise dos depoimentos.")
                         val requiredEvidence=setOf(103,104,109,110,112)
@@ -470,6 +470,7 @@ SectionTitle("ACUSAÇÃO FINAL")
                                     else ->
                                         "ACUSAÇÃO CONTESTADA: as evidências da estação não sustentam a acusação contra $accusation. A linha do tempo continua apontando para a passagem técnica e para o acesso registrado às 23h32. A acusação foi arquivada por falta de correspondência entre suspeita e provas. O caso permanece aberto."
                                 }
+                                registerEvent("Caso 001: acusação apresentada contra $accusation")
                             }
                         }
                     }
@@ -545,7 +546,7 @@ SectionTitle("ACUSAÇÃO FINAL")
             if(item.id>=200) { examinedTwo=examinedTwo+item.id;registerEvent("Caso 002: evidência registrada — ${item.title}") }
             else { examined=examined+item.id;registerEvent("Caso 001: evidência registrada — ${item.title}") }
             CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK);selectedEvidence=null
-        }){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
+        }){Text(if(if(item.id>=200) item.id in examinedTwo else item.id in examined) "FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
     }
     interviewPerson?.let { name ->
         val qs=if(activeCase=="002") caseTwoQuestions[name]?:emptyList() else questions[name]?:emptyList()

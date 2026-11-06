@@ -147,7 +147,7 @@ class MainActivity : ComponentActivity() {
             GoldButton("CONTINUAR INVESTIGAÇÃO  →",onOpen)
         }
         Spacer(Modifier.height(24.dp))
-        Text("VERSÃO 0.9  •  EXPLORAÇÃO DE AMBIENTES",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
+        Text("VERSÃO 1.0.0  •  CASO 001: DESFECHO",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
     }
 }
 @Composable private fun BrandHeader() {
@@ -314,7 +314,7 @@ class MainActivity : ComponentActivity() {
                             if(accusation.isNotBlank()) {
                                 ending=when {
                                     accusation=="Arthur Bell" && evidenceReady && interviewsReady && analysisDone ->
-                                        "CONCLUSÃO: ARTHUR BELL FOI O ELO ENTRE ELIAS E A ESTAÇÃO.\\n\\nA chave T-04, o registro de acesso às 23h32, as iniciais no banco e a fotografia escondida desmontam o álibi de Arthur. Confrontado com o mapa do ramal, ele admite que ajudou Elias a chegar ao depósito do norte.\\n\\nElias não foi levado à força: planejou desaparecer depois de descobrir uma rede clandestina que operava pela antiga estação. Arthur ajudou a apagar os rastros. O inspetor Raul recebeu ordens para encerrar a investigação antes que a rota fosse descoberta.\\n\\nCASO 001 CONCLUÍDO — O desaparecimento foi planejado, mas a rede por trás dele continua sem identificação."
+                                        "CONCLUSÃO: ARTHUR BELL FOI O ELO ENTRE ELIAS E A ESTAÇÃO.\n\nA chave T-04, o registro de acesso às 23h32, as iniciais no banco e a fotografia escondida desmontam o álibi de Arthur. Confrontado com o mapa do ramal, ele admite que ajudou Elias a chegar ao depósito do norte.\n\nElias não foi levado à força: planejou desaparecer depois de descobrir uma rede clandestina que operava pela antiga estação. Arthur ajudou a apagar os rastros. O inspetor Raul recebeu ordens para encerrar a investigação antes que a rota fosse descoberta.\n\nCASO 001 CONCLUÍDO — O desaparecimento foi planejado, mas a rede por trás dele continua sem identificação."
                                     accusation=="Arthur Bell" ->
                                         "CONCLUSÃO INCOMPLETA: Arthur Bell continua sendo o principal suspeito, mas as provas reunidas não sustentam uma acusação definitiva. O depoimento dele apresenta contradições, porém faltam registros e confirmações. O caso permanece oficialmente aberto."
                                     else ->

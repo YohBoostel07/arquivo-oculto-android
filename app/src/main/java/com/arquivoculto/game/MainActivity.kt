@@ -44,6 +44,7 @@ private data class Evidence(val id: Int, val type: String, val title: String, va
 private data class Person(val name: String, val role: String, val summary: String)
 private data class Question(val title: String, val answer: String, val clue: String)
 private data class BoardNode(val id: Int, val title: String, val subtitle: String, val kind: String)
+private data class SceneObject(val id:Int,val title:String,val room:String,val description:String,val discovery:String,val requirement:Int?=null)
 
 private val evidenceFiles = listOf(
     Evidence(1,"DOCUMENTO","Relatório da polícia","Residência Blackwood","O relatório inicial da noite do desaparecimento.","Registro: 14 de outubro, 02h17. A porta da frente estava destrancada. Uma xícara de chá permanecia morna. Nenhuma janela foi quebrada. O relógio da sala parou às 23h46."),
@@ -59,7 +60,25 @@ private val stationEvidence = listOf(
     Evidence(104,"FOTOGRAFIA","Marcas no banco","Plataforma 2","Riscos recentes na madeira do banco.","As marcas formam as letras A.B. e parecem ter sido feitas pouco antes do abandono da estação."),
     Evidence(105,"OBJETO","Lanterna sem pilhas","Entrada do túnel","Uma lanterna caída junto à porta técnica.","Há barro escuro no aro e uma fibra de tecido azul presa na alça. A lanterna foi usada recentemente.")
 )
-private val allEvidence = evidenceFiles + stationEvidence
+
+private val sceneEvidence = listOf(
+    Evidence(107,"DOCUMENTO","Bilhete de embarque rasgado","Plataforma 2","Um bilhete preso entre as tábuas do banco.","Emitido às 23h21 para uma viagem ausente dos registros oficiais. No verso há as letras E.B. e uma mancha de graxa."),
+    Evidence(108,"MECANISMO","Alavanca do sinal","Plataforma 2","Uma alavanca de sinalização travada na posição manual.","O mecanismo foi acionado recentemente e aponta para o ramal de carga, desativado desde o fechamento da estação."),
+    Evidence(109,"DOCUMENTO","Livro de turnos","Guarita","Um livro antigo escondido sob o balcão.","A página de 14 de outubro foi arrancada. Marcas na folha seguinte revelam: A.B. — acesso autorizado — 23h32."),
+    Evidence(110,"OBJETO","Gaveta com fundo falso","Guarita","Uma gaveta parece mais funda do que deveria.","Atrás do fundo falso há uma fotografia de Elias ao lado de alguém cujo rosto foi raspado."),
+    Evidence(111,"OBJETO","Grade solta no túnel","Túnel T-04","Uma grade de ventilação está parcialmente desprendida.","Atrás da grade há fibras de tecido azul e terra avermelhada. O espaço continua sob o ramal de carga."),
+    Evidence(112,"DOCUMENTO","Mapa do ramal de carga","Sala de serviço","Um mapa dobrado dentro de um armário metálico.","O mapa marca um depósito fora do perímetro da estação. Uma anotação diz: entrada pelo lado norte.")
+)
+private val sceneObjects = listOf(
+    SceneObject(107,"Entre as tábuas do banco","PLATAFORMA","Um bilhete está preso em uma fresta da madeira. Parece ter sido escondido às pressas.","Você retira um bilhete de embarque rasgado. O horário e as iniciais podem ligar Elias a uma viagem clandestina."),
+    SceneObject(108,"Painel de sinalização","PLATAFORMA","O painel está empoeirado, mas uma das alavancas não tem poeira ao redor.","A alavanca foi usada recentemente e aponta para um ramal desativado.",102),
+    SceneObject(109,"Livro sob o balcão","GUARITA","Um livro de turnos foi empurrado para trás de uma caixa de ferramentas.","As marcas deixadas na página seguinte revelam um acesso autorizado às 23h32."),
+    SceneObject(110,"Gaveta trancada","GUARITA","A gaveta tem uma fechadura antiga e um fundo aparentemente irregular.","Você encontra um compartimento falso e uma fotografia parcialmente raspada.",103),
+    SceneObject(111,"Grade de ventilação","TÚNEL","A grade está solta. Há marcas recentes de ferramenta nos parafusos.","Atrás da grade há fibras azuis e terra avermelhada. O túnel segue além da planta conhecida.",105),
+    SceneObject(112,"Armário metálico","TÚNEL","O armário está no fim da sala de serviço e parece ter sido fechado recentemente.","Dentro há um mapa do ramal de carga e a indicação de um depósito ao norte.",106)
+)
+
+private val allEvidence = evidenceFiles + stationEvidence + sceneEvidence
 private val people = listOf(
     Person("Marta Voss","Vizinha de Elias","Mora ao lado da residência e ouviu um veículo durante a noite."),
     Person("Inspetor Raul Mendes","Polícia local","Fez o primeiro registro da ocorrência e conhece o horário oficial."),

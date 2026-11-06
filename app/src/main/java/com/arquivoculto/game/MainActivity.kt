@@ -1,6 +1,8 @@
 package com.arquivoculto.game
 
 import android.content.Context
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,6 +41,19 @@ private val Gold = Color(0xFFD7B477)
 private val Pale = Color(0xFFF1EEE7)
 private val Muted = Color(0xFFA6B0BC)
 private val Line = Color(0xFF344355)
+
+private object CaseAudio {
+    @Volatile private var generator: ToneGenerator? = null
+    fun play(enabled: Boolean, tone: Int) {
+        if (!enabled) return
+        try {
+            val player = generator ?: synchronized(this) {
+                generator ?: ToneGenerator(AudioManager.STREAM_MUSIC, 42).also { generator = it }
+            }
+            player.startTone(tone, 95)
+        } catch (_: Exception) { }
+    }
+}
 
 private data class Evidence(val id: Int, val type: String, val title: String, val place: String, val description: String, val detail: String)
 private data class Person(val name: String, val role: String, val summary: String)
@@ -180,19 +195,22 @@ class MainActivity : ComponentActivity() {
     var selectedSuspect by remember { mutableStateOf("Arthur Bell") }
     var analysisDone by remember { mutableStateOf(prefs.getBoolean("analysis_done",false)) }
     var theory by remember { mutableStateOf(prefs.getString("theory","")?:"") }
+    var soundEnabled by remember { mutableStateOf(prefs.getBoolean("sound_enabled",true)) }
     var accusation by remember { mutableStateOf(prefs.getString("accusation","")?:"") }
     var ending by remember { mutableStateOf(prefs.getString("ending","")?:"") }
 
-    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending) {
+    LaunchedEffect(examined,notes,solved,confirmedLinks,interviewAnswers,analysisDone,theory,accusation,ending,soundEnabled) {
         prefs.edit().putStringSet("examined",examined.map{it.toString()}.toSet())
             .putString("notes",notes).putBoolean("station_unlocked",solved)
             .putStringSet("links",confirmedLinks).putStringSet("answers",interviewAnswers)
             .putBoolean("analysis_done",analysisDone).putString("theory",theory)
-            .putString("accusation",accusation).putString("ending",ending).apply()
+            .putString("accusation",accusation).putString("ending",ending)
+            .putBoolean("sound_enabled",soundEnabled).apply()
     }
     Column(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=16.dp)) {
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
             Column { Text("ARQUIVO OCULTO  /  CASO 001",color=Gold,fontSize=10.sp,letterSpacing=1.sp); Text("BLACKWOOD",color=Pale,fontSize=22.sp,fontWeight=FontWeight.Bold,letterSpacing=2.sp) }
+            TextButton(onClick={soundEnabled=!soundEnabled;CaseAudio.play(!soundEnabled,ToneGenerator.TONE_PROP_BEEP)}) { Text(if(soundEnabled) "SOM: ON" else "SOM: OFF",color=if(soundEnabled) Gold else Muted,fontSize=10.sp) }
             TextButton(onClick=onBack){Text("SAIR ×",color=Muted)}
         }
         Spacer(Modifier.height(10.dp))
@@ -221,7 +239,7 @@ class MainActivity : ComponentActivity() {
                 "PISTAS" -> {
                     SectionTitle("ARQUIVO DE EVIDÊNCIAS")
                     Body("Abra documentos, fotografias e objetos. Toque novamente para rever os detalhes.")
-                    allEvidence.forEach { EvidenceCard(it,it.id in examined){selectedEvidence=it} }
+                    allEvidence.forEach { EvidenceCard(it,it.id in examined){CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_BEEP);selectedEvidence=it} }
                 }
                 "CONEXÕES" -> {
                     SectionTitle("MURAL DE CONEXÕES")
@@ -236,7 +254,7 @@ class MainActivity : ComponentActivity() {
                     GoldButton("ANALISAR RELAÇÃO SELECIONADA") {
                         if(selectedLinks.size==2) {
                             val key=selectedLinks.sorted().joinToString(",")
-                            if(validLinks.any { it==selectedLinks }) confirmedLinks=confirmedLinks+key
+                            if(validLinks.any { it==selectedLinks }) { confirmedLinks=confirmedLinks+key; CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK) } else { CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_NACK) }
                             selectedLinks=emptySet()
                         }
                     }
@@ -259,12 +277,12 @@ class MainActivity : ComponentActivity() {
                     Spacer(Modifier.height(12.dp))
                     val areaEvidence=when(area){"PLATAFORMA"->stationEvidence.filter{it.id==102||it.id==104};"GUARITA"->stationEvidence.filter{it.id==103};else->stationEvidence.filter{it.id==101||it.id==105}}
                     InfoPanel("ÁREA: $area",when(area){"PLATAFORMA"->"A luz ainda funciona. Há marcas recentes no banco e sinais de que duas pessoas estiveram aqui.";"GUARITA"->"A guarita está revirada. Um molho de chaves parece ter sido escondido às pressas.";else->"A porta técnica está fechada. A planta e a chave podem revelar como entrar."})
-                    areaEvidence.forEach { EvidenceCard(it,it.id in examined){selectedEvidence=it} }
+                    areaEvidence.forEach { EvidenceCard(it,it.id in examined){CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_BEEP);selectedEvidence=it} }
                     Spacer(Modifier.height(8.dp))
                     SectionTitle("OBJETOS INTERATIVOS")
                     Body("Explore os detalhes do ambiente. Alguns objetos escondem evidências e exigem que você encontre a pista certa.")
                     sceneObjects.filter { it.room==area }.forEach { obj ->
-                        SceneObjectCard(obj,obj.id in examined,obj.requirement==null || obj.requirement in examined) { selectedSceneObject=obj }
+                        SceneObjectCard(obj,obj.id in examined,obj.requirement==null || obj.requirement in examined) { CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_BEEP);selectedSceneObject=obj }
                     }
                     if(area=="TÚNEL"&&103 in examined) GoldButton("USAR CHAVE T-04 NA PORTA"){ examined=examined+106; selectedEvidence=Evidence(106,"LOCAL DESBLOQUEADO","Passagem subterrânea","Túnel T-04","A porta foi aberta com a chave encontrada na guarita.","O túnel segue sob os trilhos e termina em uma sala de serviço. Há marcas de arrasto no chão e um pedaço de tecido azul preso a uma grade.") }
                     if(106 in examined) InfoPanel("PASSAGEM ABERTA","Você encontrou a sala de serviço sob a estação. A investigação pode continuar.")
@@ -333,7 +351,7 @@ class MainActivity : ComponentActivity() {
                     listOf("A delegacia de Blackwood.","A segunda pessoa encontrou Elias na estação ferroviária.","O hospital da cidade.").forEach { option ->
                         Button(onClick={theory=option},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(theory==option)Gold else Panel,contentColor=if(theory==option)Night else Pale)){Text(option,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
                     }
-                    GoldButton("VERIFICAR DEDUÇÃO"){if(theory=="A segunda pessoa encontrou Elias na estação ferroviária."&&examined.size>=3){solved=true}}
+                    GoldButton("VERIFICAR DEDUÇÃO"){if(theory=="A segunda pessoa encontrou Elias na estação ferroviária."&&examined.size>=3){solved=true;CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK)} else {CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_NACK)}}
                     if(solved) InfoPanel("ESTAÇÃO DESBLOQUEADA","A dedução foi confirmada. A estação ferroviária está disponível na aba LOCAIS.")
                 }
             }
@@ -360,7 +378,7 @@ class MainActivity : ComponentActivity() {
         )
     }
     selectedEvidence?.let { item ->
-        AlertDialog(onDismissRequest={selectedEvidence=null},containerColor=Panel,title={Text(item.title,color=Pale,fontWeight=FontWeight.Bold)},text={Column{Text(item.type+"  •  "+item.place.uppercase(),color=Gold,fontSize=10.sp);Spacer(Modifier.height(10.dp));Text(item.detail,color=Pale,lineHeight=23.sp)}},confirmButton={TextButton(onClick={examined=examined+item.id;selectedEvidence=null}){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
+        AlertDialog(onDismissRequest={selectedEvidence=null},containerColor=Panel,title={Text(item.title,color=Pale,fontWeight=FontWeight.Bold)},text={Column{Text(item.type+"  •  "+item.place.uppercase(),color=Gold,fontSize=10.sp);Spacer(Modifier.height(10.dp));Text(item.detail,color=Pale,lineHeight=23.sp)}},confirmButton={TextButton(onClick={examined=examined+item.id;CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK);selectedEvidence=null}){Text(if(item.id in examined)"FECHAR" else "REGISTRAR EVIDÊNCIA",color=Gold)}})
     }
     interviewPerson?.let { name ->
         val qs=questions[name]?:emptyList()
@@ -368,7 +386,7 @@ class MainActivity : ComponentActivity() {
             Column(Modifier.heightIn(max=430.dp).verticalScroll(rememberScrollState())) {
                 qs.forEachIndexed { index,q ->
                     val key="$name|$index"
-                    Button(onClick={currentQuestion=q;interviewAnswers=interviewAnswers+key},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(key in interviewAnswers)Color(0xFF294238) else Color(0xFF1B2938),contentColor=Pale)){Text(q.title,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
+                    Button(onClick={currentQuestion=q;interviewAnswers=interviewAnswers+key;CaseAudio.play(soundEnabled,ToneGenerator.TONE_PROP_ACK)},modifier=Modifier.fillMaxWidth().padding(vertical=3.dp),colors=ButtonDefaults.buttonColors(containerColor=if(key in interviewAnswers)Color(0xFF294238) else Color(0xFF1B2938),contentColor=Pale)){Text(q.title,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Start)}
                     if(currentQuestion==q) {
                         Text(q.answer,color=Pale,fontSize=13.sp,lineHeight=21.sp)
                         Text("ANOTAÇÃO: ${q.clue}",color=Gold,fontSize=11.sp,lineHeight=17.sp)
@@ -542,7 +560,7 @@ private fun defaultBoardOffset(index:Int,width:Float):Offset {
     }
 }
 @Composable private fun EvidenceCard(item:Evidence,examined:Boolean,onClick:()->Unit){
-    Column(Modifier.fillMaxWidth().padding(vertical=5.dp).border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).clickable{onClick()}.padding(13.dp)){
+    Column(Modifier.fillMaxWidth().padding(vertical=5.dp).animateContentSize().border(1.dp,Line,RoundedCornerShape(12.dp)).background(Panel,RoundedCornerShape(12.dp)).clickable{onClick()}.padding(13.dp)){
         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
             EvidenceThumbnail(item.type,Modifier.size(76.dp,62.dp))
             Column(Modifier.weight(1f).padding(start=11.dp)) {

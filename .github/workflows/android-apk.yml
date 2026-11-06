@@ -1,0 +1,40 @@
+name: Gerar APK Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.4.1
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Preparar diretório de saída
+        run: mkdir -p build
+
+      - name: Importar recursos do projeto
+        run: godot --headless --editor --path . --quit
+
+      - name: Exportar APK de depuração
+        run: godot --headless --path . --export-debug "Android" build/ArquivoOculto.apk
+
+      - name: Confirmar geração do APK
+        run: test -s build/ArquivoOculto.apk
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Arquivo-Oculto-APK
+          path: build/ArquivoOculto.apk
+          if-no-files-found: error
+          retention-days: 14

@@ -16,7 +16,7 @@ O pacote estruturado do caso está em `content/case_001.json`. Ele reúne o resu
 - [x] Protótipo local de evidências, suspeitos e anotações
 - [x] Primeira versão funcional do mural de conexões
 - [x] Conteúdo-base estruturado do Caso 001 (JSON)
-- [ ] Integrar documentos e depoimentos à interface do jogo
+- [x] Telas iniciais de documentos e depoimentos integradas à interface
 - [ ] Arte final para fotografias, documentos e retratos
 - [ ] Persistência local do progresso
 - [ ] Salas privadas e multiplayer online

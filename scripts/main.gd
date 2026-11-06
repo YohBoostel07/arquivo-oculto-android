@@ -139,6 +139,8 @@ func _case_shell() -> void:
 	tabs.add_child(_button("Dossiê", _show_dossier))
 	tabs.add_child(_button("Evidências", _show_evidence))
 	tabs.add_child(_button("Suspeitos", _show_suspects))
+	tabs.add_child(_button("Documentos", _show_documents))
+	tabs.add_child(_button("Depoimentos", _show_interviews))
 	tabs.add_child(_button("Mural de pistas", _show_board))
 	tabs.add_child(_button("Anotações", _show_notes))
 	content.add_child(HSeparator.new())
@@ -254,6 +256,49 @@ func _create_connection() -> void:
 func _remove_connection(connection: String) -> void:
 	connections.erase(connection)
 	_show_board()
+
+
+func _show_documents() -> void:
+	_case_shell()
+	_section("Documentos do caso", "Registros oficiais e materiais recolhidos na residência. Leia com atenção: um documento descreve fatos, mas nem sempre explica o que aconteceu.")
+	var docs := [
+		["DOC-01  •  Relatório de atendimento inicial", "18 de outubro, 08h05", "A residência não apresentava sinais evidentes de entrada forçada. A porta principal estava trancada. Uma janela do escritório encontrava-se aberta. Uma xícara foi localizada na sala. Havia marcas de barro no corredor entre a entrada de serviço e o escritório. O relógio da sala indicava 22h17.", "O relatório não determina a hora exata do desaparecimento."],
+		["DOC-02  •  Extrato de chamadas", "17 de outubro", "21h53 — chamada originada do telefone fixo da residência. Duração: 04min12s. Destino: número externo ainda não identificado.", "A chamada durou mais do que alguns segundos. O titular da linha de destino ainda precisa ser confirmado."],
+		["DOC-03  •  Inventário do escritório", "18 de outubro, 10h30", "Janela destrancada. Cortina parcialmente úmida devido à chuva. Nenhum vidro quebrado. Uma gaveta estava aberta. Não foram observados sinais claros de luta.", "A janela aberta não prova que alguém entrou ou saiu por ela."],
+		["DOC-04  •  Fragmento recuperado da lareira", "18 de outubro", "Fragmento de papel parcialmente queimado: “...não confie nele depois da meia-noite.” A parte inferior, onde poderia estar a assinatura, não foi preservada.", "O texto não identifica quem escreveu o bilhete ou a pessoa mencionada."]
+	]
+	for doc in docs:
+		var panel := PanelContainer.new()
+		_style_panel(panel)
+		content.add_child(panel)
+		var body := VBoxContainer.new()
+		body.add_theme_constant_override("separation", 7)
+		panel.add_child(body)
+		body.add_child(_label(doc[0], 17, GOLD))
+		body.add_child(_label(doc[1], 13, MUTED))
+		body.add_child(_label(doc[2], 15, WHITE))
+		body.add_child(_label("OBSERVAÇÃO: " + doc[3], 14, GOLD))
+
+func _show_interviews() -> void:
+	_case_shell()
+	_section("Depoimentos", "Relatos iniciais registrados pela investigação. Compare horários e detalhes com os documentos antes de tirar conclusões.")
+	var interviews := [
+		["Arthur Blackwood  •  Irmão", "“Saí às 21h30. Helena estava na sala e não parecia preocupada. Não voltei naquela noite.”", "A saída às 21h30 ainda não tem confirmação independente."],
+		["Marta Vale  •  Governanta", "“Ouvi uma discussão no escritório pouco antes das 22h. Não reconheci a segunda voz. Depois fui para meus aposentos.”", "Marta foi a primeira pessoa a comunicar o desaparecimento pela manhã."],
+		["Dr. Elias Moreau  •  Médico", "“Estive na residência durante a tarde, conforme agendado. Deixei a propriedade antes do jantar e não retornei.”", "A visita da tarde consta no livro de visitas; o restante precisa de confirmação."],
+		["Tomás Reed  •  Vizinho", "“Vi uma luz no andar superior por volta das 23h10. Não vi ninguém entrando ou saindo.”", "Uma luz acesa não confirma que Helena ainda estava na residência."],
+		["Clara Nunes  •  Amiga", "“Helena me ligou às 21h53, mas a chamada caiu quase imediatamente. Não consegui conversar com ela.”", "O extrato registra uma chamada com duração de 4 minutos e 12 segundos. A divergência exige esclarecimento, mas não prova culpa."]
+	]
+	for interview in interviews:
+		var panel := PanelContainer.new()
+		_style_panel(panel)
+		content.add_child(panel)
+		var body := VBoxContainer.new()
+		body.add_theme_constant_override("separation", 7)
+		panel.add_child(body)
+		body.add_child(_label(interview[0], 17, GOLD))
+		body.add_child(_label(interview[1], 15, WHITE))
+		body.add_child(_label("PONTO A VERIFICAR: " + interview[2], 14, MUTED))
 
 func _show_notes() -> void:
 	_case_shell()

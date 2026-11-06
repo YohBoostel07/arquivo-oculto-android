@@ -222,7 +222,7 @@ func _show_board() -> void:
 	content.add_child(_label("SUSPEITOS", 15, GOLD))
 	for suspect in SUSPECTS:
 		content.add_child(_button("＋  " + suspect["name"], _toggle_board_item.bind(suspect["name"])))
-	content.add_child(_label("Selecionados: " + ("  ↔  ".join(board_selection) if not board_selection.is_empty() else "nenhum"), 14, MUTED))
+	content.add_child(_label("Selecionados: " + (str(board_selection) if not board_selection.is_empty() else "nenhum"), 14, MUTED))
 	content.add_child(_button("CRIAR CONEXÃO ENTRE SELECIONADOS", _create_connection))
 	content.add_child(_label("CONEXÕES REGISTRADAS", 15, GOLD))
 	if connections.is_empty():

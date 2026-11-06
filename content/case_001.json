@@ -1,0 +1,132 @@
+{
+  "case_id": "001",
+  "title": "O Desaparecimento de Blackwood",
+  "classification": "Desaparecimento suspeito",
+  "date": "17 de outubro",
+  "location": "Residência Blackwood, propriedade rural de Blackwood",
+  "victim": {
+    "name": "Helena Blackwood",
+    "age": 34,
+    "description": "Proprietária da residência. Restauradora de livros raros. Desapareceu sem deixar aviso."
+  },
+  "case_brief": "Helena Blackwood desapareceu na noite de 17 de outubro. A porta principal foi encontrada trancada por dentro. Uma janela do escritório estava aberta, havia marcas de lama no corredor e o relógio da sala indicava 22h17. Não foi encontrado sinal conclusivo de arrombamento.",
+  "timeline": [
+    {"time": "18h40", "event": "Marta Vale encerra a preparação do jantar e afirma ter visto Helena na sala."},
+    {"time": "19h15", "event": "Dr. Elias Moreau deixa a propriedade após uma visita previamente agendada."},
+    {"time": "20h05", "event": "Tomás Reed, vizinho, diz ter visto um veículo escuro na estrada de acesso. Não conseguiu identificar o motorista."},
+    {"time": "21h30", "event": "Arthur Blackwood afirma que deixou a propriedade."},
+    {"time": "21h53", "event": "O registro telefônico mostra uma chamada de quatro minutos originada da residência."},
+    {"time": "22h17", "event": "O relógio da sala aparece parado nesse horário na fotografia feita pela perícia. Ainda não se sabe quando parou."},
+    {"time": "23h10", "event": "Tomás afirma ter visto uma luz no andar superior."},
+    {"time": "07h20", "event": "Marta comunica o desaparecimento após não encontrar Helena pela manhã."}
+  ],
+  "documents": [
+    {
+      "id": "DOC-01",
+      "title": "Relatório de atendimento inicial",
+      "date": "18 de outubro, 08h05",
+      "body": "A residência não apresentava sinais evidentes de entrada forçada. A porta principal estava trancada. Uma janela do escritório encontrava-se aberta. Uma xícara foi localizada na sala. Havia marcas de barro no corredor entre a entrada de serviço e o escritório. O relógio da sala indicava 22h17.",
+      "note": "O relatório descreve o que foi encontrado, mas não determina a hora exata do desaparecimento."
+    },
+    {
+      "id": "DOC-02",
+      "title": "Extrato de chamadas",
+      "date": "17 de outubro",
+      "body": "21h53 — chamada originada do telefone fixo da residência. Duração: 04min12s. Destino: número externo ainda não identificado.",
+      "note": "A chamada não foi interrompida imediatamente. O titular da linha de destino ainda precisa ser confirmado."
+    },
+    {
+      "id": "DOC-03",
+      "title": "Inventário do escritório",
+      "date": "18 de outubro, 10h30",
+      "body": "Janela destrancada. Cortina parcialmente úmida devido à chuva. Nenhum vidro quebrado. Uma gaveta estava aberta. Não foram observados sinais claros de luta.",
+      "note": "A janela aberta não prova que alguém entrou ou saiu por ela."
+    },
+    {
+      "id": "DOC-04",
+      "title": "Anotação encontrada na lareira",
+      "date": "18 de outubro",
+      "body": "Fragmento de papel parcialmente queimado: “...não confie nele depois da meia-noite.” A parte inferior, onde poderia estar a assinatura, não foi preservada.",
+      "note": "O texto não identifica a pessoa mencionada nem quem escreveu o bilhete."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-01",
+      "title": "Fotografia da sala",
+      "description": "Mostra o relógio marcando 22h17 e uma xícara sobre a mesa.",
+      "meaning": "Confirma apenas a aparência da sala no momento em que a fotografia foi tirada. O horário em que o relógio parou ainda é desconhecido."
+    },
+    {
+      "id": "EV-02",
+      "title": "Bilhete rasgado",
+      "description": "Fragmento com a frase “...não confie nele depois da meia-noite.”",
+      "meaning": "Pode indicar receio ou aviso, mas não identifica autor, destinatário ou suspeito."
+    },
+    {
+      "id": "EV-03",
+      "title": "Pegadas no corredor",
+      "description": "Marcas de barro entre a entrada de serviço e o escritório. Não há trilha equivalente do lado externo da janela.",
+      "meaning": "A rota pelo corredor é compatível com alguém que já estava dentro da casa. A janela pode ter sido aberta para simular uma saída."
+    },
+    {
+      "id": "EV-04",
+      "title": "Registro telefônico",
+      "description": "Chamada de 4 minutos e 12 segundos às 21h53.",
+      "meaning": "Contradiz a ideia de que a ligação caiu imediatamente. Ainda é necessário identificar quem recebeu a chamada."
+    }
+  ],
+  "suspects": [
+    {
+      "id": "S-01",
+      "name": "Arthur Blackwood",
+      "relation": "Irmão",
+      "statement": "Saí às 21h30. Helena estava na sala e não parecia preocupada. Não voltei naquela noite.",
+      "known_detail": "A saída às 21h30 é uma declaração ainda sem confirmação independente."
+    },
+    {
+      "id": "S-02",
+      "name": "Marta Vale",
+      "relation": "Governanta",
+      "statement": "Ouvi uma discussão no escritório pouco antes das 22h. Não reconheci a segunda voz. Depois fui para meus aposentos.",
+      "known_detail": "Marta foi a primeira pessoa a comunicar o desaparecimento pela manhã."
+    },
+    {
+      "id": "S-03",
+      "name": "Dr. Elias Moreau",
+      "relation": "Médico da família",
+      "statement": "Estive na residência durante a tarde, conforme agendado. Deixei a propriedade antes do jantar e não retornei.",
+      "known_detail": "A visita da tarde é confirmada no livro de visitas; o restante do relato precisa de confirmação."
+    },
+    {
+      "id": "S-04",
+      "name": "Tomás Reed",
+      "relation": "Vizinho",
+      "statement": "Vi uma luz no andar superior por volta das 23h10. Não vi ninguém entrando ou saindo.",
+      "known_detail": "Ver uma luz acesa não permite concluir que Helena ainda estava na casa."
+    },
+    {
+      "id": "S-05",
+      "name": "Clara Nunes",
+      "relation": "Amiga",
+      "statement": "Helena me ligou às 21h53, mas a chamada caiu quase imediatamente. Não consegui conversar com ela.",
+      "known_detail": "O extrato registra uma chamada com duração superior a quatro minutos. A divergência exige esclarecimento, mas não prova envolvimento no desaparecimento."
+    }
+  ],
+  "investigation_questions": [
+    "Quem recebeu a chamada das 21h53 e o que foi dito durante os quatro minutos?",
+    "O relógio realmente parou às 22h17 ou esse horário foi manipulado?",
+    "Quem produziu as marcas de barro no corredor?",
+    "A janela aberta foi usada como rota de fuga ou como encenação?",
+    "A luz vista às 23h10 indica presença humana ou pode ter sido deixada acesa?"
+  ],
+  "design_notes": {
+    "truth_policy": "Nenhum depoimento isolado deve ser tratado como prova definitiva. As contradições devem ser resolvidas por cruzamento de documentos e evidências.",
+    "false_leads": [
+      "O bilhete não deve apontar automaticamente para Arthur ou qualquer outro suspeito.",
+      "A janela aberta não deve ser considerada prova de fuga.",
+      "A luz vista por Tomás não confirma que Helena estava presente."
+    ],
+    "solution_status": "A solução final permanece reservada para a etapa de conclusão do caso. Este pacote contém somente informações iniciais e pistas para investigação."
+  }
+}

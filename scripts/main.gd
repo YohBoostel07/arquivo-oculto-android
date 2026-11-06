@@ -30,7 +30,14 @@ var board_selection: Array[String] = []
 var connections: Array[String] = []
 
 func _ready() -> void:
+	var saved := SaveManager.load_investigation()
+	discovered.assign(saved.get("discovered", []))
+	notes = str(saved.get("notes", ""))
+	connections.assign(saved.get("connections", []))
 	_build_home()
+
+func _persist_progress() -> void:
+	SaveManager.save_investigation(discovered, notes, connections)
 
 func _clear() -> void:
 	for child in get_children():
@@ -191,6 +198,7 @@ func _evidence_detail(item: Dictionary) -> void:
 	dialog.confirmed.connect(func() -> void:
 		if not discovered.has(item["name"]):
 			discovered.append(item["name"])
+		_persist_progress()
 		_show_evidence()
 	)
 	dialog.canceled.connect(func() -> void: dialog.queue_free())
@@ -251,10 +259,12 @@ func _create_connection() -> void:
 	if not connections.has(connection):
 		connections.append(connection)
 	board_selection.clear()
+	_persist_progress()
 	_show_board()
 
 func _remove_connection(connection: String) -> void:
 	connections.erase(connection)
+	_persist_progress()
 	_show_board()
 
 
@@ -314,4 +324,5 @@ func _show_notes() -> void:
 
 func _save_notes(edit: TextEdit) -> void:
 	notes = edit.text
+	_persist_progress()
 	_show_notes()

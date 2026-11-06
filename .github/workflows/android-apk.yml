@@ -10,13 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:4.4.1
-    # A imagem instala templates, SDK, JDK e keystore em /root.
-    # O runner define HOME=/github/home; restauramos o HOME original da imagem.
-    env:
-      HOME: /root
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
+
+      - name: Preparar ambiente Android do Godot
+        run: |
+          mkdir -p "$HOME/.config/godot" "$HOME/.local/share/godot"
+          cp -a /root/.config/godot/. "$HOME/.config/godot/"
+          cp -a /root/.local/share/godot/export_templates "$HOME/.local/share/godot/"
 
       - name: Validar projeto Godot
         run: |

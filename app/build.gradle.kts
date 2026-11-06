@@ -12,8 +12,8 @@ android {
         applicationId = "com.arquivoculto.game"
         minSdk = 23
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.2.0"
+        versionCode = 12
+        versionName = "1.5.0"
     }
 
     buildTypes {

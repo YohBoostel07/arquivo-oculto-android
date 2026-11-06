@@ -145,7 +145,7 @@ class MainActivity : ComponentActivity() {
             GoldButton("CONTINUAR INVESTIGAÇÃO  →",onOpen)
         }
         Spacer(Modifier.height(24.dp))
-        Text("VERSÃO 0.7  •  INVESTIGAÇÃO AVANÇADA",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
+        Text("VERSÃO 0.9  •  EXPLORAÇÃO DE AMBIENTES",color=Muted,fontSize=10.sp,modifier=Modifier.fillMaxWidth(),textAlign=TextAlign.Center)
     }
 }
 @Composable private fun BrandHeader() {

@@ -28,8 +28,22 @@ jobs:
       - name: Preparar diretório de saída
         run: mkdir -p build
 
+      - name: Diagnosticar ambiente de exportação Android
+        run: |
+          echo "HOME=$HOME"
+          echo "Godot:"
+          godot --version
+          echo "Templates instalados:"
+          find "$HOME/.local/share/godot/export_templates" -maxdepth 2 -type d -print
+          echo "Android SDK platforms:"
+          ls -la "$ANDROID_HOME/platforms" || true
+          echo "Android SDK build-tools:"
+          ls -la "$ANDROID_HOME/build-tools" || true
+          echo "Configurações Android do Godot (sem senhas):"
+          grep -E '^(export/android|export/android_sdk|export/android_debug_keystore)' "$HOME/.config/godot"/editor_settings-*.tres | sed -E 's/(password|pass)[^=]*=.*/\\1=<oculto>/I' || true
+
       - name: Exportar APK de depuração
-        run: godot --headless --path . --export-debug "Android" build/ArquivoOculto.apk
+        run: godot --headless --verbose --path . --export-debug "Android" build/ArquivoOculto.apk
 
       - name: Verificar APK gerado
         run: test -s build/ArquivoOculto.apk
